@@ -1,0 +1,11 @@
+{
+  "name": "root-wrapper",
+  "private": true,
+  "scripts": {
+    "install-modules": "cd web_converter && npm install",
+    "build": "npm run install-modules && cd web_converter && npm run build && cd .. && rm -rf dist && mkdir dist && cp -r web_converter/dist/* dist/"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
