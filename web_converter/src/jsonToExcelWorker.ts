@@ -39,30 +39,71 @@ function flattenRow(original: Record<string, any>): Record<string, any> {
     result = { ...result, ...body };
   }
   
+  const messages = Array.isArray(result.messages) ? result.messages : undefined;
+
   // 2. Extract content from messages if available
-  if (Array.isArray(result.messages)) {
+  if (messages) {
     // Try to find user message
-    const userMsg = result.messages.find((m: any) => m?.role === 'user');
+    const userMsg = messages.find((m: any) => m?.role === 'user');
     if (userMsg?.content && !result.content) {
       result.content = userMsg.content;
     }
-    
-    // Try to find assistant message (for results)
-    const assistantMsg = result.messages.find((m: any) => m?.role === 'assistant');
-    if (assistantMsg?.content && !result.output) {
-      result.output = assistantMsg.content;
-    }
   }
-  
-  // 3. Handle 'response' object (common in batch inference output)
-  if (isPlainObject(result.response) && isPlainObject(result.response.body)) {
-     const respBody = result.response.body as any;
-     if (Array.isArray(respBody.choices)) {
+
+  // 3. Extract output (Assistant response)
+  if (!result.output) {
+    // Try response.body.choices first
+    if (isPlainObject(result.response) && isPlainObject((result.response as any).body)) {
+      const respBody = (result.response as any).body;
+      if (Array.isArray(respBody.choices)) {
          const choice = respBody.choices[0];
-         if (choice?.message?.content && !result.output) {
+         if (choice?.message?.content) {
              result.output = choice.message.content;
          }
-     }
+      }
+    }
+    // Try top-level choices
+    if (!result.output && Array.isArray(result.choices)) {
+       const choice = result.choices[0];
+       if (choice?.message?.content) {
+           result.output = choice.message.content;
+       }
+    }
+    // Try messages
+    if (!result.output && messages) {
+        const assistantMsg = messages.find((m: any) => m?.role === 'assistant');
+        if (assistantMsg?.content) {
+            result.output = assistantMsg.content;
+        }
+    }
+  }
+
+  // 4. Extract reasoning_content (DeepSeek style thinking process)
+  if (!result.reasoning_content) {
+    // Try response.body.choices first
+    if (isPlainObject(result.response) && isPlainObject((result.response as any).body)) {
+      const respBody = (result.response as any).body;
+      if (Array.isArray(respBody.choices)) {
+         const choice = respBody.choices[0];
+         if (choice?.message?.reasoning_content) {
+             result.reasoning_content = choice.message.reasoning_content;
+         }
+      }
+    }
+    // Try top-level choices
+    if (!result.reasoning_content && Array.isArray(result.choices)) {
+       const choice = result.choices[0];
+       if (choice?.message?.reasoning_content) {
+           result.reasoning_content = choice.message.reasoning_content;
+       }
+    }
+    // Try messages
+    if (!result.reasoning_content && messages) {
+        const assistantMsg = messages.find((m: any) => m?.role === 'assistant');
+        if (assistantMsg?.reasoning_content) {
+            result.reasoning_content = assistantMsg.reasoning_content;
+        }
+    }
   }
 
   return result;
@@ -204,6 +245,17 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
 
     // --- 写入表头 ---
     const headerArray = Array.from(header);
+    // Sort headers: custom_id, content, output, reasoning_content first
+    const priorityHeaders = ['custom_id', 'content', 'output', 'reasoning_content'];
+    headerArray.sort((a, b) => {
+        const idxA = priorityHeaders.indexOf(a);
+        const idxB = priorityHeaders.indexOf(b);
+        if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+        if (idxA !== -1) return -1;
+        if (idxB !== -1) return 1;
+        return a.localeCompare(b);
+    });
+
     const encoder = new TextEncoder();
     // Write BOM for Excel UTF-8 compatibility
     accessHandle.write(new Uint8Array([0xEF, 0xBB, 0xBF]));
