@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Upload, FileType, X, Loader2, Download, Trash2, FileSpreadsheet, FileJson, Eye } from 'lucide-react';
+import { Upload, FileType, X, Loader2, Download, Trash2, FileSpreadsheet, FileJson, Eye, Layers } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import streamSaver from 'streamsaver';
@@ -236,30 +236,45 @@ const ProgressRing = () => (
 );
 
 function App() {
-  const [activeModule, setActiveModule] = useState<'excel_to_jsonl' | 'json_to_excel'>('excel_to_jsonl');
+  const [activeModule, setActiveModule] = useState<'excel_to_jsonl' | 'json_to_excel' | 'merge_csv'>('excel_to_jsonl');
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<'idle' | 'processing' | 'completed' | 'error'>('idle');
   const [processedCount, setProcessedCount] = useState(0);
   const [errorMessage, setErrorMessage] = useState<string>('');
   const [warnings, setWarnings] = useState<string[]>([]);
   const [tempFilename, setTempFilename] = useState<string>('');
+  
+  // JSON to Excel state
   const [jsonFile, setJsonFile] = useState<File | null>(null);
   const [jsonStatus, setJsonStatus] = useState<'idle' | 'processing' | 'completed' | 'error'>('idle');
   const [jsonProcessedCount, setJsonProcessedCount] = useState(0);
   const [jsonErrorMessage, setJsonErrorMessage] = useState<string>('');
   const [jsonStage, setJsonStage] = useState<string>('');
   const [jsonTempFilename, setJsonTempFilename] = useState<string>('');
+  
+  // Merge state
+  const [mergeFiles, setMergeFiles] = useState<{ id: string; name: string; type: 'history' | 'upload'; file?: File; historyItem?: HistoryItem }[]>([]);
+  const [mergeStatus, setMergeStatus] = useState<'idle' | 'processing' | 'completed' | 'error'>('idle');
+  const [mergeProcessedCount, setMergeProcessedCount] = useState(0);
+  const [mergeErrorMessage, setMergeErrorMessage] = useState('');
+  const [mergeTempFilename, setMergeTempFilename] = useState('');
+  const [mergeStage, setMergeStage] = useState('');
+
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string>('');
   const [previewItem, setPreviewItem] = useState<HistoryItem | null>(null);
   const [previewContent, setPreviewContent] = useState<{ type: 'text' | 'table', content: any } | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  
   const workerRef = useRef<Worker | null>(null);
   const jsonWorkerRef = useRef<Worker | null>(null);
+  const mergeWorkerRef = useRef<Worker | null>(null);
+  
   const historyRef = useRef<HistoryItem[]>([]);
   const tempFilenameRef = useRef<string>('');
   const jsonTempFilenameRef = useRef<string>('');
+  const mergeTempFilenameRef = useRef<string>('');
 
   useEffect(() => {
     historyRef.current = history;
@@ -272,6 +287,10 @@ function App() {
   useEffect(() => {
     jsonTempFilenameRef.current = jsonTempFilename;
   }, [jsonTempFilename]);
+  
+  useEffect(() => {
+    mergeTempFilenameRef.current = mergeTempFilename;
+  }, [mergeTempFilename]);
 
   useEffect(() => {
     return () => {
@@ -285,8 +304,12 @@ function App() {
       if (jsonTempFilenameRef.current) {
         deleteOpfsFile(jsonTempFilenameRef.current).catch(() => undefined);
       }
+      if (mergeTempFilenameRef.current) {
+        deleteOpfsFile(mergeTempFilenameRef.current).catch(() => undefined);
+      }
       workerRef.current?.terminate();
       jsonWorkerRef.current?.terminate();
+      mergeWorkerRef.current?.terminate();
     };
   }, []);
 
@@ -315,15 +338,6 @@ function App() {
   };
 
   const resetJsonState = () => {
-    // Only delete the previous temp file if it exists and is not in history
-    // But since we can't easily check if it's in history by filename here (without iterating),
-    // and we generally want to clean up the 'current' slot when resetting:
-    // Actually, if we reset, we are clearing the UI.
-    // If the user hasn't saved it to history (which happens automatically on complete), it might be lost.
-    // But on complete, it IS saved to history.
-    // So if we reset, we just clear the reference.
-    // We should NOT delete the file because it might be in history.
-    
     setJsonStatus('idle');
     setJsonErrorMessage('');
     setJsonProcessedCount(0);
@@ -332,6 +346,140 @@ function App() {
     setIsDownloading(false);
     setDownloadError('');
   };
+  
+  // Merge functions
+  const handleMergeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+     if (e.target.files && e.target.files.length > 0) {
+        const newFiles = Array.from(e.target.files).map(f => ({
+           id: `upload_${Date.now()}_${Math.random()}`,
+           name: f.name,
+           type: 'upload' as const,
+           file: f
+        }));
+        setMergeFiles(prev => [...prev, ...newFiles]);
+        resetMergeState();
+     }
+  };
+
+  const toggleHistorySelection = (item: HistoryItem) => {
+     const exists = mergeFiles.find(f => f.id === item.id);
+     if (exists) {
+        setMergeFiles(prev => prev.filter(f => f.id !== item.id));
+     } else {
+        setMergeFiles(prev => [...prev, {
+           id: item.id,
+           name: item.outputName,
+           type: 'history',
+           historyItem: item
+        }]);
+     }
+     resetMergeState();
+  };
+  
+  const removeMergeFile = (id: string) => {
+     setMergeFiles(prev => prev.filter(f => f.id !== id));
+     resetMergeState();
+  }
+
+  const resetMergeState = () => {
+     setMergeStatus('idle');
+     setMergeErrorMessage('');
+     setMergeProcessedCount(0);
+     setMergeStage('');
+     setMergeTempFilename('');
+     setIsDownloading(false);
+     setDownloadError('');
+  }
+  
+  const startMerge = async () => {
+     if (mergeFiles.length === 0) return;
+     if (mergeStatus === 'processing') return;
+
+     setMergeStatus('processing');
+     setMergeErrorMessage('');
+     setMergeProcessedCount(0);
+     setMergeStage('准备中');
+     setMergeTempFilename('');
+     setDownloadError('');
+
+     // Prepare items for worker
+     const workerItems = mergeFiles.map(f => {
+        if (f.type === 'upload' && f.file) {
+           return { type: 'file', file: f.file, name: f.name };
+        } else if (f.type === 'history' && f.historyItem) {
+           return { type: 'opfs', filename: f.historyItem.opfsFilename, name: f.name };
+        }
+        return null;
+     }).filter(Boolean);
+
+     setTimeout(() => {
+        try {
+           if (mergeWorkerRef.current) mergeWorkerRef.current.terminate();
+           mergeWorkerRef.current = new Worker(new URL('./mergeWorker.ts', import.meta.url), { type: 'module' });
+           
+           mergeWorkerRef.current.onerror = () => {
+              setMergeStatus('error');
+              setMergeErrorMessage('Worker 启动失败');
+              mergeWorkerRef.current?.terminate();
+           };
+
+           mergeWorkerRef.current.onmessage = async (e) => {
+              const { type, processed, tempFilename, error, stage } = e.data;
+              
+              if (type === 'stage') {
+                 setMergeStage(stage);
+                 return;
+              }
+              if (type === 'progress') {
+                 setMergeProcessedCount(processed);
+                 return;
+              }
+              if (type === 'complete') {
+                 setMergeStatus('completed');
+                 setMergeProcessedCount(processed);
+                 setMergeStage('完成');
+                 if (tempFilename) setMergeTempFilename(tempFilename);
+
+                 // Add to history
+                 const outputName = `merged_${Date.now()}.csv`;
+                 const historyId = `${Date.now()}_${Math.random().toString(16).slice(2)}`;
+                 
+                 let sizeBytes = undefined;
+                 try {
+                    const f = await readOpfsFile(tempFilename);
+                    sizeBytes = f.size;
+                 } catch {}
+
+                 const newItem: HistoryItem = {
+                    id: historyId,
+                    createdAt: Date.now(),
+                    inputName: `${mergeFiles.length} 个文件`,
+                    outputName,
+                    opfsFilename: tempFilename,
+                    processedCount: processed,
+                    warnings: [],
+                    sizeBytes
+                 };
+                 setHistory(prev => [newItem, ...prev].slice(0, 50));
+                 
+                 mergeWorkerRef.current?.terminate();
+                 return;
+              }
+              if (type === 'error') {
+                 setMergeStatus('error');
+                 setMergeErrorMessage(error || 'Unknown error');
+                 mergeWorkerRef.current?.terminate();
+              }
+           };
+
+           mergeWorkerRef.current.postMessage({ items: workerItems });
+
+        } catch (err: any) {
+           setMergeStatus('error');
+           setMergeErrorMessage(err.message);
+        }
+     }, 50);
+  }
 
   const handleRemoveFile = () => {
       setFile(null);
@@ -638,6 +786,7 @@ function App() {
 
   const downloadDisabled = status !== 'completed' || !tempFilename || isDownloading;
   const jsonDownloadDisabled = jsonStatus !== 'completed' || !jsonTempFilename || isDownloading;
+  const mergeDownloadDisabled = mergeStatus !== 'completed' || !mergeTempFilename || isDownloading;
 
   return (
     <div className="min-h-screen bg-[#f7f8fa] text-[#1f2329] font-sans">
@@ -656,13 +805,6 @@ function App() {
                 官方文档
               </a>。
               </p>
-
-              <div className="space-y-2 text-[#43474e]">
-                <div className="flex items-center space-x-2">
-                   <span className="font-medium text-[#1f2329]">文件要求：</span>
-                   <span className="text-sm">必须包含表头 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-xs">custom_id</code> 和 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-xs">content</code></span>
-                </div>
-              </div>
             </div>
           </div>
 
@@ -685,6 +827,15 @@ function App() {
                 }`}
               >
                 JSON 转 Excel/CSV
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveModule('merge_csv')}
+                className={`h-8 px-4 text-[14px] leading-[20px] font-medium transition-colors duration-200 border-l border-[#e5e6eb] ${
+                  activeModule === 'merge_csv' ? 'bg-[#e1eaff] text-[#3370ff]' : 'bg-white text-[#43474e] hover:bg-[#f7f8fa]'
+                }`}
+              >
+                合并 CSV
               </button>
             </div>
           </div>
@@ -947,6 +1098,175 @@ function App() {
                 </div>
               </div>
             )}
+          </div>
+          )}
+
+          {activeModule === 'merge_csv' && (
+          <div className="space-y-6">
+             <div className="text-[14px] leading-[22px] text-[#43474e]">
+                支持合并多个 <span className="font-medium text-[#1f2329]">CSV</span> 文件。自动识别表头并取并集。
+             </div>
+
+             <div className="flex flex-col sm:flex-row gap-6">
+                 {/* Left Column: History & Upload */}
+                 <div className="flex-1 space-y-4">
+                     {/* History Section */}
+                     <div className="border border-[#e5e6eb] rounded-[8px] bg-white overflow-hidden">
+                         <div className="px-4 py-3 bg-[#f7f8fa] border-b border-[#e5e6eb] font-medium text-sm flex justify-between items-center">
+                             <span>历史记录中的 CSV</span>
+                         </div>
+                         <div className="max-h-[200px] overflow-y-auto p-2 space-y-1">
+                             {history.filter(h => h.outputName.endsWith('.csv')).length === 0 ? (
+                                 <div className="text-center text-xs text-[#8f959e] py-4">暂无 CSV 历史记录</div>
+                             ) : (
+                                 history.filter(h => h.outputName.endsWith('.csv')).map(item => {
+                                     const isSelected = mergeFiles.some(f => f.id === item.id);
+                                     return (
+                                         <div 
+                                             key={item.id} 
+                                             onClick={() => toggleHistorySelection(item)}
+                                             className={`flex items-center p-2 rounded cursor-pointer transition-colors ${isSelected ? 'bg-[#e1eaff] border border-[#3370ff]' : 'hover:bg-[#f7f8fa] border border-transparent'}`}
+                                         >
+                                             <div className={`w-4 h-4 rounded border flex items-center justify-center mr-3 ${isSelected ? 'bg-[#3370ff] border-[#3370ff]' : 'border-[#c9cdd4] bg-white'}`}>
+                                                 {isSelected && <div className="w-2 h-2 bg-white rounded-sm" />}
+                                             </div>
+                                             <div className="flex-1 min-w-0">
+                                                 <div className="text-sm truncate font-medium text-[#1f2329]">{item.outputName}</div>
+                                                 <div className="text-xs text-[#8f959e]">{formatTime(item.createdAt)} · {formatBytes(item.sizeBytes)}</div>
+                                             </div>
+                                         </div>
+                                     );
+                                 })
+                             )}
+                         </div>
+                     </div>
+                     
+                     {/* Upload Section */}
+                     <div className="relative border border-dashed border-[#e5e6eb] bg-[#f9f9f9] rounded-[8px] p-4 text-center hover:border-[#3370ff] transition-colors duration-200 cursor-pointer group">
+                        <input
+                           type="file"
+                           accept=".csv"
+                           multiple
+                           onChange={handleMergeUpload}
+                           className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                        />
+                        <div className="flex flex-col items-center justify-center space-y-1">
+                           <Upload className="w-6 h-6 text-[#8f959e] group-hover:text-[#3370ff]" />
+                           <span className="text-sm font-medium text-[#43474e]">点击上传更多本地 CSV</span>
+                        </div>
+                     </div>
+                 </div>
+                 
+                 {/* Right Column: Selected Files & Action */}
+                 <div className="flex-1 space-y-4 flex flex-col">
+                     <div className="border border-[#e5e6eb] rounded-[8px] bg-white flex-1 flex flex-col overflow-hidden min-h-[300px]">
+                         <div className="px-4 py-3 bg-[#f7f8fa] border-b border-[#e5e6eb] font-medium text-sm flex justify-between items-center">
+                             <span>已选文件 ({mergeFiles.length})</span>
+                             {mergeFiles.length > 0 && (
+                                 <button onClick={() => { setMergeFiles([]); resetMergeState(); }} className="text-xs text-[#3370ff] hover:underline">清空</button>
+                             )}
+                         </div>
+                         <div className="flex-1 overflow-y-auto p-2 space-y-2">
+                             {mergeFiles.length === 0 ? (
+                                 <div className="h-full flex items-center justify-center text-sm text-[#8f959e]">
+                                     请从左侧选择或上传文件
+                                 </div>
+                             ) : (
+                                 mergeFiles.map(f => (
+                                     <div key={f.id} className="flex items-center justify-between p-2 bg-[#f7f8fa] rounded border border-[#e5e6eb]">
+                                         <div className="flex items-center space-x-2 min-w-0">
+                                             <Layers className="w-4 h-4 text-[#3370ff] flex-shrink-0" />
+                                             <span className="text-sm text-[#1f2329] truncate">{f.name}</span>
+                                             {f.type === 'upload' && <span className="text-[10px] bg-[#e6fffb] text-[#006d75] px-1 rounded border border-[#87e8de]">本地</span>}
+                                             {f.type === 'history' && <span className="text-[10px] bg-[#f0f5ff] text-[#1d39c4] px-1 rounded border border-[#adc6ff]">历史</span>}
+                                         </div>
+                                         <button onClick={() => removeMergeFile(f.id)} className="text-[#8f959e] hover:text-[#9c2b2e] p-1">
+                                             <X className="w-4 h-4" />
+                                         </button>
+                                     </div>
+                                 ))
+                             )}
+                         </div>
+                     </div>
+                     
+                     <div className="space-y-3">
+                         <button
+                            onClick={startMerge}
+                            disabled={mergeFiles.length < 2 || mergeStatus === 'processing' || isDownloading}
+                            className={`w-full h-9 rounded-[4px] font-medium text-sm transition-colors ${
+                                mergeFiles.length < 2 || mergeStatus === 'processing' || isDownloading
+                                ? 'bg-[#e5e6eb] text-[#c9cdd4] cursor-not-allowed'
+                                : 'bg-[#3370ff] text-white hover:bg-[#2957cc]'
+                            }`}
+                         >
+                            {mergeStatus === 'processing' ? '合并中...' : `开始合并 (${mergeFiles.length} 个文件)`}
+                         </button>
+                         
+                         <button
+                            onClick={async () => {
+                               if (!mergeTempFilename || isDownloading) return;
+                               setIsDownloading(true);
+                               setDownloadError('');
+                               try {
+                                  const opfsFile = await readOpfsFile(mergeTempFilename);
+                                  const outputName = `merged_${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.csv`;
+                                  await saveFileToDisk(opfsFile, outputName);
+                               } catch (err: any) {
+                                  if (err?.name !== 'AbortError') {
+                                     setDownloadError(err?.message || '下载失败');
+                                  }
+                               } finally {
+                                  setIsDownloading(false);
+                               }
+                            }}
+                            disabled={mergeDownloadDisabled}
+                            className={`w-full h-9 rounded-[4px] font-medium text-sm transition-colors border flex items-center justify-center space-x-2 ${
+                                mergeDownloadDisabled
+                                ? 'bg-[#e5e6eb] text-[#c9cdd4] border-[#e5e6eb] cursor-not-allowed'
+                                : 'bg-white text-[#3370ff] border-[#3370ff] hover:bg-[#f0f4ff]'
+                            }`}
+                         >
+                            {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                            <span>下载合并结果</span>
+                         </button>
+                     </div>
+                 </div>
+             </div>
+
+             {mergeStatus === 'processing' && (
+               <div className="flex flex-col space-y-2">
+                 <div className="flex items-center space-x-2 text-[#43474e] text-[14px] leading-[22px] bg-[#f7f8fa] p-3 rounded-[8px] border border-[#e5e6eb]">
+                   <Loader2 className="animate-spin h-4 w-4 text-[#3370ff]" />
+                   <span>正在合并{mergeStage ? `（${mergeStage}）` : ''}... 已处理 {mergeProcessedCount} 行</span>
+                 </div>
+                 <div className="w-full bg-[#e5e6eb] rounded-full h-2.5">
+                   <div className="bg-[#3370ff] h-2.5 rounded-full transition-all duration-200 w-full">
+                     <div className="animate-pulse w-full h-full bg-white/30"></div>
+                   </div>
+                 </div>
+               </div>
+             )}
+
+             {mergeStatus === 'error' && (
+               <div className="bg-[#ffdede] border border-[#fccaca] rounded-[8px] p-4 text-[#9c2b2e] text-[14px] leading-[22px] flex items-start">
+                 <span className="mr-2">🚨</span>
+                 <div>
+                   <p className="font-bold mb-1">合并失败</p>
+                   <p>{mergeErrorMessage}</p>
+                 </div>
+               </div>
+             )}
+
+             {mergeStatus === 'completed' && (
+               <div className="bg-[#dff0d8] border border-[#c3e6cb] rounded-[8px] p-4 text-[#155724] text-[14px] leading-[22px] flex items-start">
+                 <span className="mr-2">✅</span>
+                 <div>
+                   <p className="font-bold mb-1">合并完成</p>
+                   <p>共生成 {mergeProcessedCount} 行数据</p>
+                   {downloadError && <p className="mt-2 text-[12px] leading-[20px] text-[#9c2b2e]">下载错误：{downloadError}</p>}
+                 </div>
+               </div>
+             )}
           </div>
           )}
 
