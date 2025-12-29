@@ -417,9 +417,10 @@ function App() {
            if (mergeWorkerRef.current) mergeWorkerRef.current.terminate();
            mergeWorkerRef.current = new Worker(new URL('./mergeWorker.ts', import.meta.url), { type: 'module' });
            
-           mergeWorkerRef.current.onerror = () => {
+           mergeWorkerRef.current.onerror = (e) => {
+              const msg = e instanceof ErrorEvent ? e.message : '脚本加载错误';
               setMergeStatus('error');
-              setMergeErrorMessage('Worker 启动失败');
+              setMergeErrorMessage(`Worker 启动失败: ${msg}`);
               mergeWorkerRef.current?.terminate();
            };
 
@@ -507,9 +508,10 @@ function App() {
 
         workerRef.current = new Worker(new URL('./worker.ts', import.meta.url), { type: 'module' });
         
-        workerRef.current.onerror = () => {
+        workerRef.current.onerror = (e) => {
+            const msg = e instanceof ErrorEvent ? e.message : '脚本加载错误';
             setStatus('error');
-            setErrorMessage("Worker 启动失败");
+            setErrorMessage(`Worker 启动失败: ${msg}`);
             workerRef.current?.terminate();
         };
 
@@ -592,9 +594,10 @@ function App() {
 
         jsonWorkerRef.current = new Worker(new URL('./jsonToExcelWorker.ts', import.meta.url), { type: 'module' });
 
-        jsonWorkerRef.current.onerror = () => {
+        jsonWorkerRef.current.onerror = (e) => {
+          const msg = e instanceof ErrorEvent ? e.message : '脚本加载错误';
           setJsonStatus('error');
-          setJsonErrorMessage('Worker 启动失败');
+          setJsonErrorMessage(`Worker 启动失败: ${msg}`);
           jsonWorkerRef.current?.terminate();
         };
 
@@ -796,7 +799,7 @@ function App() {
             <h1 className="text-[20px] font-semibold text-[#1f2329] leading-[28px]">火山方舟-批量推理文件转换工具</h1>
             <div className="mt-4 text-[14px] leading-[22px] text-[#43474e] space-y-4">
               <p>
-              上传 <strong>CSV</strong> 或 <strong>Excel</strong> 文件，自动转换为批量推理专用的 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-sm">jsonl</code> 格式并校验。详细规范参考 <a
+              上传 <strong>CSV</strong> 或 <strong>Excel</strong> 文件，自动转换为批量推理专用的 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-sm">jsonl</code> 格式并校验。文件表头必须包含 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-sm">custom_id</code> 和 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-sm">content</code>，详细规范参考 <a
                 href="https://www.volcengine.com/docs/82379/1305505?lang=zh"
                 target="_blank"
                 rel="noreferrer"
