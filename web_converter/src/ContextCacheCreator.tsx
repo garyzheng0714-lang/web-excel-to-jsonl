@@ -130,6 +130,12 @@ export const ContextCacheCreator: React.FC<ContextCacheCreatorProps> = () => {
         if (data?.error?.message) {
           throw new Error(data.error.message);
         }
+        if (response.status === 405) {
+          throw new Error('请求失败：405。当前环境可能未启用 /ark 代理（例如 vite preview 或静态部署）。请使用 npm run dev，或在部署环境为 /ark 配置反向代理。');
+        }
+        if (response.status === 502 || response.status === 504) {
+          throw new Error(`请求失败：${response.status}。通常是因为请求内容过长导致 Vercel/网关超时。建议：\n1. 尝试使用本地开发模式 (npm run dev) 运行，本地代理无严格超时限制。\n2. 稍后重试或减少单次缓存内容。`);
+        }
         throw new Error(`请求失败：${response.status} ${response.statusText}`);
       }
 
