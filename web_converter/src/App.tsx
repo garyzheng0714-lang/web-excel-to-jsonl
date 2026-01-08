@@ -3,6 +3,7 @@ import { Upload, FileType, X, Loader2, Download, Trash2, FileSpreadsheet, FileJs
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import streamSaver from 'streamsaver';
+import { ContextCacheCreator } from './ContextCacheCreator';
 
 type HistoryItem = {
   id: string;
@@ -236,7 +237,7 @@ const ProgressRing = () => (
 );
 
 function App() {
-  const [activeModule, setActiveModule] = useState<'excel_to_jsonl' | 'json_to_excel' | 'merge_csv'>('excel_to_jsonl');
+  const [activeModule, setActiveModule] = useState<'excel_to_jsonl' | 'json_to_excel' | 'merge_csv' | 'context_cache'>('excel_to_jsonl');
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<'idle' | 'processing' | 'completed' | 'error'>('idle');
   const [processedCount, setProcessedCount] = useState(0);
@@ -840,8 +841,21 @@ function App() {
               >
                 合并 CSV
               </button>
+              <button
+                type="button"
+                onClick={() => setActiveModule('context_cache')}
+                className={`h-8 px-4 text-[14px] leading-[20px] font-medium transition-colors duration-200 border-l border-[#e5e6eb] ${
+                  activeModule === 'context_cache' ? 'bg-[#e1eaff] text-[#3370ff]' : 'bg-white text-[#43474e] hover:bg-[#f7f8fa]'
+                }`}
+              >
+                创建上下文缓存
+              </button>
             </div>
           </div>
+          
+          {activeModule === 'context_cache' && (
+            <ContextCacheCreator />
+          )}
           
           {activeModule === 'excel_to_jsonl' && (
           <div className="space-y-6">
