@@ -18,6 +18,8 @@ type PriceInfo = {
   hitPricePerKTokensText: string;
 };
 
+type ThinkingType = 'enabled' | 'disabled' | 'auto';
+
 const MODEL_PRICE_BY_ID_LOWER: Record<string, PriceInfo> = {
   'doubao-seed-1-8-251228': {
     storagePricePerKTokensPerHourText: '0.000017 元/千tokens/小时',
@@ -47,6 +49,7 @@ export const ContextCacheCreator: React.FC<ContextCacheCreatorProps> = () => {
   const [model, setModel] = useState(PRESET_MODELS[0].id);
   const [customModel, setCustomModel] = useState('');
   const [useCustomModel, setUseCustomModel] = useState(false);
+  const [thinkingType, setThinkingType] = useState<ThinkingType>('disabled');
   const [ttl, setTtl] = useState(3600);
   const [content, setContent] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -111,7 +114,7 @@ export const ContextCacheCreator: React.FC<ContextCacheCreatorProps> = () => {
           model: selectedModelId,
           input: [{ role: 'system', content }],
           caching: { type: 'enabled', prefix: true },
-          thinking: { type: 'disabled' },
+          thinking: { type: thinkingType },
           expire_at: expireAt,
         })
       });
@@ -280,6 +283,22 @@ export const ContextCacheCreator: React.FC<ContextCacheCreatorProps> = () => {
               <div>命中：{selectedPriceInfo.hitPricePerKTokensText}</div>
             </div>
           )}
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            thinking.type
+            <span className="text-xs text-gray-500 ml-2">enabled / disabled / auto</span>
+          </label>
+          <select
+            value={thinkingType}
+            onChange={(e) => setThinkingType(e.target.value as ThinkingType)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
+          >
+            <option value="enabled">enabled：开启思考模式（一定先思考后回答）</option>
+            <option value="disabled">disabled：关闭思考模式（直接回答）</option>
+            <option value="auto">auto：自动思考（模型自主判断）</option>
+          </select>
         </div>
 
         <div>
