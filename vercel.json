@@ -2,6 +2,10 @@
   "outputDirectory": "dist",
   "rewrites": [
     {
+      "source": "/ark/(.*)",
+      "destination": "https://ark.cn-beijing.volces.com/$1"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

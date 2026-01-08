@@ -7,11 +7,39 @@ interface ContextCacheCreatorProps {
 
 const PRESET_MODELS = [
   { id: 'doubao-seed-1-8-251228', name: 'Doubao Seed 1.8' },
-  { id: 'doubao-1-5-pro-32k-250115', name: 'Doubao 1.5 Pro 32k' },
-  { id: 'doubao-1-5-lite-32k-250115', name: 'Doubao 1.5 Lite 32k' },
-  { id: 'deepseek-v3-2-251201', name: 'DeepSeek V3' },
-  { id: 'deepseek-r1-250528', name: 'DeepSeek R1' },
+  { id: 'doubao-seed-1-6-251015', name: 'Doubao Seed 1.6' },
+  { id: 'doubao-seed-1-6-lite-251015', name: 'Doubao Seed 1.6 Lite' },
+  { id: 'doubao-seed-1-6-flash-250828', name: 'Doubao Seed 1.6 Flash' },
+  { id: 'Doubao-Seed-1.6-thinking', name: 'Doubao Seed 1.6 Thinking' },
 ];
+
+type PriceInfo = {
+  storagePricePerKTokensPerHourText: string;
+  hitPricePerKTokensText: string;
+};
+
+const MODEL_PRICE_BY_ID_LOWER: Record<string, PriceInfo> = {
+  'doubao-seed-1-8-251228': {
+    storagePricePerKTokensPerHourText: '0.000017 元/千tokens/小时',
+    hitPricePerKTokensText: '0.00016 元/千tokens',
+  },
+  'doubao-seed-1-6-251015': {
+    storagePricePerKTokensPerHourText: '0.000017 元/千tokens/小时',
+    hitPricePerKTokensText: '0.00016 元/千tokens',
+  },
+  'doubao-seed-1-6-lite-251015': {
+    storagePricePerKTokensPerHourText: '0.000017 元/千tokens/小时',
+    hitPricePerKTokensText: '0.00006 元/千tokens',
+  },
+  'doubao-seed-1-6-flash-250828': {
+    storagePricePerKTokensPerHourText: '0.000017 元/千tokens/小时',
+    hitPricePerKTokensText: '0.00003 元/千tokens',
+  },
+  'doubao-seed-1.6-thinking': {
+    storagePricePerKTokensPerHourText: '0.000017 元/千tokens/小时',
+    hitPricePerKTokensText: '0.00016 元/千tokens',
+  },
+};
 
 export const ContextCacheCreator: React.FC<ContextCacheCreatorProps> = () => {
   const [apiKey, setApiKey] = useState('');
@@ -35,6 +63,19 @@ export const ContextCacheCreator: React.FC<ContextCacheCreatorProps> = () => {
     return String(result.id);
   }, [result?.id, status]);
 
+  const selectedModelId = useMemo(() => (useCustomModel ? customModel : model).trim(), [customModel, model, useCustomModel]);
+
+  const selectedPriceInfo = useMemo(() => {
+    if (!selectedModelId) return null;
+    return MODEL_PRICE_BY_ID_LOWER[selectedModelId.toLowerCase()] ?? null;
+  }, [selectedModelId]);
+
+  const resultPriceInfo = useMemo(() => {
+    if (!result?.model) return null;
+    const id = String(result.model).toLowerCase();
+    return MODEL_PRICE_BY_ID_LOWER[id] ?? null;
+  }, [result?.model]);
+
   const handleCreate = async () => {
     if (!apiKey) {
       setErrorMsg('请输入 API Key');
@@ -47,8 +88,7 @@ export const ContextCacheCreator: React.FC<ContextCacheCreatorProps> = () => {
       return;
     }
 
-    const selectedModel = useCustomModel ? customModel : model;
-    if (!selectedModel) {
+    if (!selectedModelId) {
       setErrorMsg('请选择或输入模型 ID');
       setStatus('error');
       return;
@@ -68,7 +108,7 @@ export const ContextCacheCreator: React.FC<ContextCacheCreatorProps> = () => {
           'Authorization': `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: selectedModel,
+          model: selectedModelId,
           input: [{ role: 'system', content }],
           caching: { type: 'enabled', prefix: true },
           thinking: { type: 'disabled' },
@@ -234,6 +274,12 @@ export const ContextCacheCreator: React.FC<ContextCacheCreatorProps> = () => {
               {useCustomModel ? '选择预设' : '自定义'}
             </button>
           </div>
+          {selectedPriceInfo && (
+            <div className="mt-2 text-xs text-gray-600">
+              <div>存储：{selectedPriceInfo.storagePricePerKTokensPerHourText}</div>
+              <div>命中：{selectedPriceInfo.hitPricePerKTokensText}</div>
+            </div>
+          )}
         </div>
 
         <div>
@@ -315,6 +361,16 @@ export const ContextCacheCreator: React.FC<ContextCacheCreatorProps> = () => {
                 <div className="mt-1 text-sm text-gray-900">{result.expire_at ?? '-'}</div>
               </div>
             </div>
+
+            {resultPriceInfo && (
+              <div className="border-t border-green-200 pt-3 mt-3">
+                <label className="text-xs font-medium text-green-800 uppercase tracking-wider">价格（缓存）</label>
+                <div className="mt-1 grid grid-cols-2 gap-2 text-xs text-gray-600">
+                  <div>存储：{resultPriceInfo.storagePricePerKTokensPerHourText}</div>
+                  <div>命中：{resultPriceInfo.hitPricePerKTokensText}</div>
+                </div>
+              </div>
+            )}
 
             {result.usage && (
               <div className="border-t border-green-200 pt-3 mt-3">
