@@ -40,9 +40,9 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
           const zipFiles: { name: string, blob: Blob }[] = [];
 
           if (shouldSplit) {
-            // Chunk size: 10000 lines max per file (including header and 2 empty lines)
-            // So data rows per chunk = 10000 - 1 (header) - 2 (empty lines) = 9997
-            const MAX_ROWS_PER_FILE = 10000;
+            // Chunk size: 20000 lines max per file (including header and 2 empty lines)
+            // So data rows per chunk = 20000 - 1 (header) - 2 (empty lines) = 19997
+            const MAX_ROWS_PER_FILE = 20000;
             const HEADER_ROWS_COUNT = 3; // 1 header + 2 empty
             const DATA_ROWS_PER_CHUNK = MAX_ROWS_PER_FILE - HEADER_ROWS_COUNT;
   

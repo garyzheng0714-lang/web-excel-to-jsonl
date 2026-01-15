@@ -830,7 +830,7 @@ function App() {
               )}
               {activeModule === 'split_tool' && (
                 <p>
-                  上传 <strong>CSV</strong> 文件，自动插入格式化空行，按 10000 行/文件进行拆分，并打包为 ZIP 下载。专为产品榜导入设计。
+                  上传 <strong>CSV</strong> 文件，自动插入格式化空行，按 20000 行/文件进行拆分，并打包为 ZIP 下载。专为产品榜导入设计。
                 </p>
               )}
             </div>

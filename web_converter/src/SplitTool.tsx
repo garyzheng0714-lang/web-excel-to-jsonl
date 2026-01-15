@@ -111,7 +111,7 @@ export function SplitTool() {
       <div className="text-center space-y-4">
         <h2 className="text-3xl font-bold text-gray-900 tracking-tight">CSV 拆分工具（产品榜导入专用）</h2>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          自动将 CSV 转换为 XLSX，插入空行，并可选按 10000 行拆分打包
+          自动将 CSV 转换为 XLSX，插入空行，并可选按 20000 行拆分打包
         </p>
       </div>
 
@@ -125,7 +125,7 @@ export function SplitTool() {
                   onChange={() => setShouldSplit(true)}
                   className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300"
               />
-              <span className="text-gray-700 font-medium">按 10000 行拆分</span>
+              <span className="text-gray-700 font-medium">按 20000 行拆分</span>
           </label>
           <label className="flex items-center space-x-2 cursor-pointer select-none">
               <input 
