@@ -803,7 +803,7 @@ function App() {
             <div className="mt-4 text-[14px] leading-[22px] text-[#43474e] space-y-4">
               {activeModule === 'excel_to_jsonl' && (
                 <p>
-                上传 <strong>CSV</strong> 或 <strong>Excel</strong> 文件，自动转换为批量推理专用的 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-sm">jsonl</code> 格式并校验。文件表头必须包含 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-sm">custom_id</code> 和 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-sm">content</code>，详细规范参考 <a
+                上传 <strong>CSV</strong> 或 <strong>Excel</strong> 文件，自动转换为批量推理专用的 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-sm">jsonl</code> 格式并校验。文件表头必须包含 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-sm">custom_id</code> 和 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-sm">content</code>。若包含 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-sm">image_url</code>，则会自动转换为多模态图片理解格式。详细规范参考 <a
                   href="https://www.volcengine.com/docs/82379/1305505?lang=zh"
                   target="_blank"
                   rel="noreferrer"
@@ -896,7 +896,7 @@ function App() {
                     : "border-transparent text-[#646a73] hover:text-[#1f2329] hover:border-[#8f959e]"
                 )}
               >
-                CSV 拆分工具
+                CSV 拆分工具（产品榜导入专用）
               </button>
             </nav>
           </div>
@@ -1337,7 +1337,7 @@ function App() {
 
           <div className="border-t border-[#f0f2f6] pt-6">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-bold">转换记录</h2>
+              <h2 className="text-lg font-bold">转换记录（非云端保存，关闭网页/刷新后消失）</h2>
               <button
                 onClick={clearHistory}
                 disabled={history.length === 0}

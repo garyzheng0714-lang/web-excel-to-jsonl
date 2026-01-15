@@ -109,7 +109,7 @@ export function SplitTool() {
   return (
     <div className="w-full max-w-4xl mx-auto p-6 space-y-8">
       <div className="text-center space-y-4">
-        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">CSV 拆分工具</h2>
+        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">CSV 拆分工具（产品榜导入专用）</h2>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
           自动将 CSV 转换为 XLSX，插入空行，并可选按 10000 行拆分打包
         </p>
