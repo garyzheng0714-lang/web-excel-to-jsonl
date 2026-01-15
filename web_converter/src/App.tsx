@@ -1,9 +1,11 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Upload, FileType, X, Loader2, Download, Trash2, FileSpreadsheet, FileJson, Eye, Layers } from 'lucide-react';
+import { Upload, FileType, X, Loader2, Download, Trash2, FileSpreadsheet, FileJson, Eye, Layers, Scissors } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import streamSaver from 'streamsaver';
+import { cn } from './lib/utils';
 import { ContextCacheCreator } from './ContextCacheCreator';
+import { SplitTool } from './SplitTool';
 
 type HistoryItem = {
   id: string;
@@ -237,7 +239,7 @@ const ProgressRing = () => (
 );
 
 function App() {
-  const [activeModule, setActiveModule] = useState<'excel_to_jsonl' | 'json_to_excel' | 'merge_csv' | 'context_cache'>('excel_to_jsonl');
+  const [activeModule, setActiveModule] = useState<'excel_to_jsonl' | 'json_to_excel' | 'merge_csv' | 'context_cache' | 'split_tool'>('excel_to_jsonl');
   const [file, setFile] = useState<File | null>(null);
   const [status, setStatus] = useState<'idle' | 'processing' | 'completed' | 'error'>('idle');
   const [processedCount, setProcessedCount] = useState(0);
@@ -797,62 +799,112 @@ function App() {
       <main className="max-w-[736px] mx-auto px-6 py-6">
         <div className="bg-white border border-[#e5e6eb] rounded-[8px] p-6 shadow-sm space-y-6">
           <div>
-            <h1 className="text-[20px] font-semibold text-[#1f2329] leading-[28px]">火山方舟-批量推理文件转换工具</h1>
+            <h1 className="text-[20px] font-semibold text-[#1f2329] leading-[28px]">Gary-常用文件处理工具</h1>
             <div className="mt-4 text-[14px] leading-[22px] text-[#43474e] space-y-4">
-              <p>
-              上传 <strong>CSV</strong> 或 <strong>Excel</strong> 文件，自动转换为批量推理专用的 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-sm">jsonl</code> 格式并校验。文件表头必须包含 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-sm">custom_id</code> 和 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-sm">content</code>，详细规范参考 <a
-                href="https://www.volcengine.com/docs/82379/1305505?lang=zh"
-                target="_blank"
-                rel="noreferrer"
-                className="text-[#3370ff] hover:text-[#2957cc] transition-colors duration-200"
-              >
-                官方文档
-              </a>。
-              </p>
+              {activeModule === 'excel_to_jsonl' && (
+                <p>
+                上传 <strong>CSV</strong> 或 <strong>Excel</strong> 文件，自动转换为批量推理专用的 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-sm">jsonl</code> 格式并校验。文件表头必须包含 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-sm">custom_id</code> 和 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-sm">content</code>，详细规范参考 <a
+                  href="https://www.volcengine.com/docs/82379/1305505?lang=zh"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[#3370ff] hover:text-[#2957cc] transition-colors duration-200"
+                >
+                  官方文档
+                </a>。
+                </p>
+              )}
+              {activeModule === 'json_to_excel' && (
+                <p>
+                  上传 <strong>JSON</strong> (数组或对象) 或 <strong>JSONL</strong> 文件，自动将其转换为 <code className="bg-[#f0f2f6] px-1.5 py-0.5 rounded text-[#3370ff] font-mono text-sm">.csv</code> 格式，方便在 Excel 中查看和编辑。
+                </p>
+              )}
+              {activeModule === 'merge_csv' && (
+                <p>
+                  合并多个 <strong>CSV</strong> 文件为一个文件。支持上传多个本地文件或从转换历史中选择文件进行合并。
+                </p>
+              )}
+              {activeModule === 'context_cache' && (
+                <p>
+                  创建上下文缓存 (Context Cache) 数据。根据输入的系统提示词和用户内容，生成符合缓存格式的 JSONL 文件。
+                </p>
+              )}
+              {activeModule === 'split_tool' && (
+                <p>
+                  上传 <strong>CSV</strong> 文件，自动插入格式化空行，按 10000 行/文件进行拆分，并打包为 ZIP 下载。专为产品榜导入设计。
+                </p>
+              )}
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <div className="inline-flex rounded-[4px] border border-[#e5e6eb] overflow-hidden">
+          <div className="border-b border-[#e5e6eb] mb-6">
+            <nav className="-mb-px flex flex-wrap gap-x-6 gap-y-2" aria-label="Tabs">
               <button
                 type="button"
                 onClick={() => setActiveModule('excel_to_jsonl')}
-                className={`h-8 px-4 text-[14px] leading-[20px] font-medium transition-colors duration-200 ${
-                  activeModule === 'excel_to_jsonl' ? 'bg-[#e1eaff] text-[#3370ff]' : 'bg-white text-[#43474e] hover:bg-[#f7f8fa]'
-                }`}
+                className={cn(
+                  "whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors",
+                  activeModule === 'excel_to_jsonl'
+                    ? "border-[#3370ff] text-[#3370ff]"
+                    : "border-transparent text-[#646a73] hover:text-[#1f2329] hover:border-[#8f959e]"
+                )}
               >
                 Excel/CSV 转 JSONL
               </button>
               <button
                 type="button"
                 onClick={() => setActiveModule('json_to_excel')}
-                className={`h-8 px-4 text-[14px] leading-[20px] font-medium transition-colors duration-200 border-l border-[#e5e6eb] ${
-                  activeModule === 'json_to_excel' ? 'bg-[#e1eaff] text-[#3370ff]' : 'bg-white text-[#43474e] hover:bg-[#f7f8fa]'
-                }`}
+                className={cn(
+                  "whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors",
+                  activeModule === 'json_to_excel'
+                    ? "border-[#3370ff] text-[#3370ff]"
+                    : "border-transparent text-[#646a73] hover:text-[#1f2329] hover:border-[#8f959e]"
+                )}
               >
                 JSON 转 Excel/CSV
               </button>
               <button
                 type="button"
                 onClick={() => setActiveModule('merge_csv')}
-                className={`h-8 px-4 text-[14px] leading-[20px] font-medium transition-colors duration-200 border-l border-[#e5e6eb] ${
-                  activeModule === 'merge_csv' ? 'bg-[#e1eaff] text-[#3370ff]' : 'bg-white text-[#43474e] hover:bg-[#f7f8fa]'
-                }`}
+                className={cn(
+                  "whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors",
+                  activeModule === 'merge_csv'
+                    ? "border-[#3370ff] text-[#3370ff]"
+                    : "border-transparent text-[#646a73] hover:text-[#1f2329] hover:border-[#8f959e]"
+                )}
               >
                 合并 CSV
               </button>
               <button
                 type="button"
                 onClick={() => setActiveModule('context_cache')}
-                className={`h-8 px-4 text-[14px] leading-[20px] font-medium transition-colors duration-200 border-l border-[#e5e6eb] ${
-                  activeModule === 'context_cache' ? 'bg-[#e1eaff] text-[#3370ff]' : 'bg-white text-[#43474e] hover:bg-[#f7f8fa]'
-                }`}
+                className={cn(
+                  "whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors",
+                  activeModule === 'context_cache'
+                    ? "border-[#3370ff] text-[#3370ff]"
+                    : "border-transparent text-[#646a73] hover:text-[#1f2329] hover:border-[#8f959e]"
+                )}
               >
                 创建上下文缓存
               </button>
-            </div>
+              <button
+                type="button"
+                onClick={() => setActiveModule('split_tool')}
+                className={cn(
+                  "whitespace-nowrap py-3 px-1 border-b-2 font-medium text-sm transition-colors",
+                  activeModule === 'split_tool'
+                    ? "border-[#3370ff] text-[#3370ff]"
+                    : "border-transparent text-[#646a73] hover:text-[#1f2329] hover:border-[#8f959e]"
+                )}
+              >
+                CSV 拆分工具
+              </button>
+            </nav>
           </div>
           
+          {activeModule === 'split_tool' && (
+            <SplitTool />
+          )}
+
           {activeModule === 'context_cache' && (
             <ContextCacheCreator />
           )}
@@ -989,10 +1041,6 @@ function App() {
 
           {activeModule === 'json_to_excel' && (
           <div className="space-y-6">
-            <div className="text-[14px] leading-[22px] text-[#43474e]">
-              支持 <span className="font-medium text-[#1f2329]">.json</span>（数组或单对象）与 <span className="font-medium text-[#1f2329]">.jsonl</span>（每行一个 JSON 对象），输出为 <span className="font-medium text-[#1f2329]">.csv</span>（Excel 可打开）。
-            </div>
-
             <div className="space-y-2">
               <label className="text-[14px] font-normal text-[#43474e] leading-[22px]">选择 JSON 文件</label>
               <div className="relative">
