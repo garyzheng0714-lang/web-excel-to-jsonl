@@ -49,7 +49,7 @@ export const ContextCacheCreator: React.FC<ContextCacheCreatorProps> = () => {
   const [model, setModel] = useState(PRESET_MODELS[0].id);
   const [customModel, setCustomModel] = useState('');
   const [useCustomModel, setUseCustomModel] = useState(false);
-  const [thinkingType, setThinkingType] = useState<ThinkingType>('disabled');
+  const [thinkingType, setThinkingType] = useState<ThinkingType | 'none'>('disabled');
   const [ttl, setTtl] = useState(3600);
   const [content, setContent] = useState('');
   const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
@@ -104,19 +104,25 @@ export const ContextCacheCreator: React.FC<ContextCacheCreatorProps> = () => {
     try {
       const expireAt = Math.floor(Date.now() / 1000) + ttl;
 
+      const requestBody: any = {
+        model: selectedModelId,
+        input: [{ role: 'system', content }],
+        caching: { type: 'enabled', prefix: true },
+        expire_at: expireAt,
+      };
+
+      // 仅当用户未选择 "none" 时，才添加 thinking 字段
+      if (thinkingType !== 'none') {
+        requestBody.thinking = { type: thinkingType };
+      }
+
       const response = await fetch('/ark/api/v3/responses', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${apiKey}`,
         },
-        body: JSON.stringify({
-          model: selectedModelId,
-          input: [{ role: 'system', content }],
-          caching: { type: 'enabled', prefix: true },
-          thinking: { type: thinkingType },
-          expire_at: expireAt,
-        })
+        body: JSON.stringify(requestBody)
       });
 
       let data: any = null;
@@ -298,12 +304,13 @@ export const ContextCacheCreator: React.FC<ContextCacheCreatorProps> = () => {
           </label>
           <select
             value={thinkingType}
-            onChange={(e) => setThinkingType(e.target.value as ThinkingType)}
+            onChange={(e) => setThinkingType(e.target.value as ThinkingType | 'none')}
             className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
           >
-            <option value="enabled">enabled：开启思考模式（一定先思考后回答）</option>
             <option value="disabled">disabled：关闭思考模式（直接回答）</option>
+            <option value="enabled">enabled：开启思考模式（一定先思考后回答）</option>
             <option value="auto">auto：自动思考（模型自主判断）</option>
+            <option value="none">无 (默认)：不传该字段 (兼容不支持 thinking 的模型)</option>
           </select>
         </div>
 

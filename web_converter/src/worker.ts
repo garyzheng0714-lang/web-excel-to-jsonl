@@ -178,13 +178,34 @@ function processRow(row: any, customIdSet: Set<string>, lineNum: number): { succ
   const content = row.content !== undefined && row.content !== null ? String(row.content) : "";
 
   // 3. Construct JSON object
+  let messageContent: any = content;
+  
+  // Check image_url
+  if (row.image_url) {
+    const imageUrl = String(row.image_url).trim();
+    if (imageUrl) {
+      messageContent = [
+        {
+          type: "image_url",
+          image_url: {
+            url: imageUrl
+          }
+        },
+        {
+          type: "text",
+          text: content
+        }
+      ];
+    }
+  }
+
   const jsonObj = {
     custom_id: customId,
     body: {
       messages: [
         {
           role: "user",
-          content: content
+          content: messageContent
         }
       ],
       max_tokens: 4096,
