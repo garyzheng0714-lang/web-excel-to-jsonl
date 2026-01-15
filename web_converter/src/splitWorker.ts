@@ -67,7 +67,9 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
               XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
   
               // Generate XLSX Buffer
-              const xlsxBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+              // Use bookSST: true to force Shared String Table, which improves compatibility with some readers (like POI) and might reduce size.
+              // Use compression: true if supported by the library version, though JSZip will handle the main compression.
+              const xlsxBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array', bookSST: true, compression: true });
   
               // Create Zip
               const zip = new JSZip();
@@ -75,7 +77,12 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
               zip.file("产品榜导入信息.xlsx", xlsxBuffer);
   
               // Generate Zip Blob
-              const zipBlob = await zip.generateAsync({ type: 'blob' });
+              // Use compression: "DEFLATE" for better compression ratio
+              const zipBlob = await zip.generateAsync({ 
+                  type: 'blob', 
+                  compression: "DEFLATE", 
+                  compressionOptions: { level: 6 } 
+              });
               
               // Zip filename: {OriginalName}_拆分{i+1}.zip
               const zipName = `${baseName}_拆分${i + 1}.zip`;
@@ -119,7 +126,9 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
              XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
 
              // Generate XLSX Buffer
-             const xlsxBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+             // Use bookSST: true to force Shared String Table, which improves compatibility with some readers (like POI) and might reduce size.
+             // Use compression: true if supported by the library version, though JSZip will handle the main compression.
+             const xlsxBuffer = XLSX.write(wb, { bookType: 'xlsx', type: 'array', bookSST: true, compression: true });
 
              // Create Zip
              const zip = new JSZip();
@@ -127,7 +136,12 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
              zip.file("产品榜导入信息.xlsx", xlsxBuffer);
 
              // Generate Zip Blob
-             const zipBlob = await zip.generateAsync({ type: 'blob' });
+             // Use compression: "DEFLATE" for better compression ratio
+             const zipBlob = await zip.generateAsync({ 
+                 type: 'blob', 
+                 compression: "DEFLATE", 
+                 compressionOptions: { level: 6 } 
+             });
              
              // Zip filename: {OriginalName}.zip (Same as original filename but .zip)
              const zipName = `${baseName}.zip`;
