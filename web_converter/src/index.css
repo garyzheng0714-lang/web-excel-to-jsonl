@@ -1,3 +1,75 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Manrope:wght@200;300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+  --font-sans: 'Manrope', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  
+  --bg-app: #f4f4f0; /* Off-white paper */
+  --fg-primary: #1a1a1a;
+  --fg-secondary: #5a5a5a;
+  --border-strong: #1a1a1a;
+  --border-subtle: #d4d4d0;
+  
+  --accent-color: #ff4d00; /* International Orange */
+  --accent-surface: #ffece6;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-app);
+  color: var(--fg-primary);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Swiss Grid overlay effect (optional, keep it subtle) */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-image: linear-gradient(var(--border-subtle) 1px, transparent 1px),
+  linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
+  background-size: 40px 40px;
+  background-position: center 0;
+  opacity: 0.05;
+  pointer-events: none;
+  z-index: -1;
+}
+
+@layer components {
+  /* Brutalist / Swiss Card */
+  .swiss-card {
+    @apply bg-white border border-slate-900 rounded-none shadow-[4px_4px_0px_0px_rgba(26,26,26,1)];
+  }
+  
+  .swiss-card-hover {
+    @apply transition-transform hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(26,26,26,1)];
+  }
+
+  /* Input fields */
+  .swiss-input {
+    @apply w-full bg-white border-b-2 border-slate-200 px-0 py-3 text-lg font-medium text-slate-900 focus:border-slate-900 focus:outline-none transition-colors placeholder:text-slate-400 font-mono;
+  }
+
+  /* Typography */
+  .text-display {
+    @apply font-extrabold tracking-tight text-slate-900;
+  }
+  
+  .text-label {
+    @apply font-mono text-xs uppercase tracking-wider text-slate-500 font-medium;
+  }
+
+  /* Buttons */
+  .btn-swiss-primary {
+    @apply inline-flex items-center justify-center bg-slate-900 text-white px-6 py-3 font-mono text-sm font-medium hover:bg-slate-800 active:translate-y-[1px] transition-all;
+  }
+
+  .btn-swiss-outline {
+    @apply inline-flex items-center justify-center bg-transparent border-2 border-slate-900 text-slate-900 px-6 py-3 font-mono text-sm font-bold hover:bg-slate-900 hover:text-white transition-colors;
+  }
+}

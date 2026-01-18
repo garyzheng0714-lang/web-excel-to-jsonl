@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Upload, FileDown, AlertCircle, CheckCircle2, Loader2, FileSpreadsheet } from 'lucide-react';
 import { cn } from './lib/utils';
@@ -80,7 +79,7 @@ export function SplitTool() {
 
   const processFile = (file: File) => {
     if (!file.name.toLowerCase().endsWith('.csv')) {
-      setError('请上传 CSV 文件');
+      setError('Please upload a CSV file');
       return;
     }
 
@@ -107,171 +106,148 @@ export function SplitTool() {
   };
 
   return (
-    <div className="w-full max-w-4xl mx-auto p-6 space-y-8">
-      <div className="text-center space-y-4">
-        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">CSV 拆分工具（产品榜导入专用）</h2>
-        <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-          自动将 CSV 转换为 XLSX，插入空行，并可选按 20000 行拆分打包
-        </p>
-      </div>
-
-      {/* Options */}
-      <div className="flex justify-center items-center space-x-6">
-          <label className="flex items-center space-x-2 cursor-pointer select-none">
-              <input 
-                  type="radio" 
-                  name="splitMode"
-                  checked={shouldSplit} 
-                  onChange={() => setShouldSplit(true)}
-                  className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-              />
-              <span className="text-gray-700 font-medium">按 20000 行拆分</span>
-          </label>
-          <label className="flex items-center space-x-2 cursor-pointer select-none">
-              <input 
-                  type="radio" 
-                  name="splitMode"
-                  checked={!shouldSplit} 
-                  onChange={() => setShouldSplit(false)}
-                  className="w-4 h-4 text-blue-600 focus:ring-blue-500 border-gray-300"
-              />
-              <span className="text-gray-700 font-medium">不拆分 (仅按产品榜上传格式规范修改)</span>
-          </label>
-      </div>
-
-      {/* Upload Area */}
-      <div
-        className={cn(
-          "relative group cursor-pointer",
-          "border-3 border-dashed rounded-3xl transition-all duration-300 ease-out",
-          "flex flex-col items-center justify-center p-12 text-center",
-          "bg-white shadow-sm hover:shadow-md",
-          isDragOver 
-            ? "border-blue-500 bg-blue-50 scale-[1.01]" 
-            : "border-gray-200 hover:border-blue-400 hover:bg-gray-50"
-        )}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={() => document.getElementById('split-file-upload')?.click()}
-      >
-        <input
-          id="split-file-upload"
-          type="file"
-          accept=".csv"
-          className="hidden"
-          onChange={handleFileSelect}
-        />
-        
-        <div className={cn(
-          "p-6 rounded-full mb-6 transition-all duration-300",
-          isDragOver ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-400 group-hover:bg-blue-50 group-hover:text-blue-500"
-        )}>
-          <FileSpreadsheet className="w-12 h-12" />
-        </div>
-        
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">
-          {isDragOver ? '释放文件以开始' : '点击或拖拽 CSV 文件'}
-        </h3>
-        <p className="text-gray-500 max-w-sm mx-auto">
-          支持 .csv 格式，将自动拆分并打包下载
-        </p>
-      </div>
-
-      {fileRowCount !== null && (
-        <div className="text-center animate-in fade-in slide-in-from-top-2">
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-blue-50 text-blue-700 font-medium text-sm">
-                <span className="mr-2">📊</span>
-                检测到 {fileRowCount.toLocaleString()} 行数据
-            </div>
-        </div>
-      )}
-
-      {/* Debug Info */}
-      {debugInfo.length > 0 && (
-          <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 text-xs font-mono overflow-auto max-h-60">
-              <h3 className="font-bold mb-2">调试信息 (请检查首尾数据是否重复)</h3>
-              <table className="w-full text-left">
-                  <thead>
-                      <tr>
-                          <th className="p-1">Chunk</th>
-                          <th className="p-1">Range</th>
-                          <th className="p-1">First Row (Col 1)</th>
-                          <th className="p-1">Last Row (Col 1)</th>
-                      </tr>
-                  </thead>
-                  <tbody>
-                      {debugInfo.map((info, idx) => (
-                          <tr key={idx} className="border-t border-gray-200">
-                              <td className="p-1">{info.chunkIndex + 1}</td>
-                              <td className="p-1">{info.startLine}-{info.endLine}</td>
-                              <td className="p-1">{info.firstVal}</td>
-                              <td className="p-1">{info.lastVal}</td>
-                          </tr>
-                      ))}
-                  </tbody>
-              </table>
-          </div>
-      )}
-
-      {/* Status & Results */}
-      <div className="space-y-4">
-        {error && (
-          <div className="p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-700 animate-in fade-in slide-in-from-top-2">
-            <AlertCircle className="w-5 h-5 flex-shrink-0" />
-            <p>{error}</p>
-          </div>
-        )}
-
-        {isProcessing && (
-          <div className="p-8 bg-white border border-gray-100 rounded-xl shadow-sm space-y-4 text-center">
-            <Loader2 className="w-10 h-10 text-blue-500 animate-spin mx-auto" />
-            <div>
-              <p className="font-medium text-gray-900">正在处理...</p>
-              {totalChunks > 0 && (
-                <p className="text-sm text-gray-500 mt-1">
-                  正在生成第 {progress} / {totalChunks} 个分卷
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {generatedFiles.length > 0 && (
-          <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4">
-            <div className="p-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
-              <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                <CheckCircle2 className="w-5 h-5 text-green-500" />
-                处理完成 ({generatedFiles.length} 个文件)
-              </h3>
-            </div>
-            <div className="divide-y divide-gray-100">
-              {generatedFiles.map((file, index) => (
-                <div key={index} className="p-4 flex items-center justify-between hover:bg-gray-50 transition-colors">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                      <FileSpreadsheet className="w-5 h-5" />
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{file.name}</p>
-                      <p className="text-xs text-gray-500">
-                        包含 "产品榜导入信息.xlsx"
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => handleDownload(file)}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm hover:shadow"
-                  >
-                    <FileDown className="w-4 h-4" />
-                    下载
-                  </button>
+    <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="space-y-6">
+            <div className="space-y-1">
+                <label className="text-label">拆分模式</label>
+                <div className="flex gap-4 p-4 border border-slate-200 bg-white">
+                    <label className="flex items-center space-x-2 cursor-pointer select-none">
+                        <input 
+                            type="radio" 
+                            name="splitMode"
+                            checked={shouldSplit} 
+                            onChange={() => setShouldSplit(true)}
+                            className="h-4 w-4 border-slate-300 text-slate-900 focus:ring-slate-900 accent-slate-900"
+                        />
+                        <span className="text-sm font-mono text-slate-900">20K 行 / 块</span>
+                    </label>
+                    <label className="flex items-center space-x-2 cursor-pointer select-none">
+                        <input 
+                            type="radio" 
+                            name="splitMode"
+                            checked={!shouldSplit} 
+                            onChange={() => setShouldSplit(false)}
+                            className="h-4 w-4 border-slate-300 text-slate-900 focus:ring-slate-900 accent-slate-900"
+                        />
+                        <span className="text-sm font-mono text-slate-900">不拆分 (仅格式化)</span>
+                    </label>
                 </div>
-              ))}
             </div>
-          </div>
-        )}
+
+            <div className="space-y-1">
+                <label className="text-label">上传 CSV</label>
+                <div
+                    className={cn(
+                    "group relative w-full h-48 border-2 border-dashed border-slate-300 hover:border-slate-900 transition-colors bg-white flex flex-col items-center justify-center cursor-pointer",
+                    isDragOver && "border-slate-900 bg-slate-50"
+                    )}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                    onClick={() => document.getElementById('split-file-upload')?.click()}
+                >
+                    <input
+                    id="split-file-upload"
+                    type="file"
+                    accept=".csv"
+                    className="hidden"
+                    onChange={handleFileSelect}
+                    />
+                    
+                    <FileSpreadsheet className="w-10 h-10 text-slate-300 mb-4 group-hover:text-slate-900 transition-colors" />
+                    <p className="font-mono text-sm font-bold text-slate-900">
+                    {isDragOver ? '释放以上传' : '拖放 CSV 至此'}
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <div className="space-y-6">
+            {fileRowCount !== null && (
+                <div className="p-4 border border-blue-200 bg-blue-50 text-blue-800 font-mono text-xs font-bold flex items-center gap-2">
+                    <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></span>
+                    检测到 {fileRowCount.toLocaleString()} 行
+                </div>
+            )}
+
+            {isProcessing && (
+                <div className="p-6 border border-slate-200 bg-slate-50 text-center space-y-3">
+                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-slate-400" />
+                    <p className="font-mono text-sm font-bold">处理中...</p>
+                    {totalChunks > 0 && (
+                        <p className="font-mono text-xs text-slate-500">正在生成块 {progress} / {totalChunks}</p>
+                    )}
+                </div>
+            )}
+
+            {error && (
+                <div className="p-4 border-2 border-red-500 bg-red-50 text-red-600 font-mono text-sm">
+                    <p className="font-bold">错误：</p>
+                    <p>{error}</p>
+                </div>
+            )}
+
+            {generatedFiles.length > 0 && (
+                <div className="border-2 border-emerald-500 bg-emerald-50">
+                    <div className="p-4 border-b border-emerald-200 flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                            <span className="font-mono font-bold text-sm text-emerald-800">完成 ({generatedFiles.length} 文件)</span>
+                        </div>
+                    </div>
+                    <div className="divide-y divide-emerald-100 max-h-[300px] overflow-y-auto">
+                        {generatedFiles.map((file, index) => (
+                            <div key={index} className="p-3 hover:bg-emerald-100/50 flex items-center justify-between group transition-colors">
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                    <FileSpreadsheet className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                                    <div className="min-w-0">
+                                        <p className="font-mono text-xs font-bold text-emerald-900 truncate">{file.name}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => handleDownload(file)}
+                                    className="p-2 hover:bg-emerald-200 text-emerald-700 transition-colors"
+                                    title="Download"
+                                >
+                                    <FileDown className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </div>
       </div>
+
+      {debugInfo.length > 0 && (
+        <div className="mt-8 border-t-2 border-slate-100 pt-6">
+            <h3 className="font-mono font-bold text-xs uppercase tracking-wider text-slate-400 mb-4">调试信息</h3>
+            <div className="overflow-x-auto">
+                <table className="w-full text-left font-mono text-xs">
+                    <thead className="border-b border-slate-200 text-slate-500">
+                        <tr>
+                            <th className="py-2 pr-4">块</th>
+                            <th className="py-2 pr-4">范围</th>
+                            <th className="py-2 pr-4">首值</th>
+                            <th className="py-2">末值</th>
+                        </tr>
+                    </thead>
+                    <tbody className="text-slate-700">
+                        {debugInfo.map((info, idx) => (
+                            <tr key={idx} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
+                                <td className="py-2 pr-4 font-bold">{info.chunkIndex + 1}</td>
+                                <td className="py-2 pr-4">{info.startLine}-{info.endLine}</td>
+                                <td className="py-2 pr-4 max-w-[200px] truncate" title={info.firstVal}>{info.firstVal}</td>
+                                <td className="py-2 max-w-[200px] truncate" title={info.lastVal}>{info.lastVal}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+      )}
     </div>
   );
 }
