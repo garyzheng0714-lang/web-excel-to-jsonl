@@ -6,6 +6,7 @@ import streamSaver from 'streamsaver';
 import { cn } from './lib/utils';
 import { AppShell } from './components/AppShell';
 import { TopBar } from './components/TopBar';
+import { ModuleHeader } from './components/ModuleHeader';
 import { SideNav } from './components/SideNav';
 import { RightPanel } from './components/RightPanel';
 import { ContextCacheCreator } from './ContextCacheCreator';
@@ -853,6 +854,26 @@ function App() {
   const mergeDownloadDisabled = mergeStatus !== 'completed' || !mergeTempFilename || isDownloading;
   const activeModuleMeta = MODULES.find((module) => module.id === activeModule);
   const ActiveModuleIcon = activeModuleMeta?.icon;
+  const isProcessing = status === 'processing' || jsonStatus === 'processing' || mergeStatus === 'processing';
+  const moduleStatusText = isProcessing ? '处理中' : '就绪';
+  const moduleMetaChips = [
+    { label: '环境', value: '本地浏览器' },
+    { label: '记录', value: `${history.length} 条` },
+    {
+      label: '状态',
+      value: (
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              'w-2 h-2 rounded-full',
+              isProcessing ? 'bg-amber-400 animate-pulse' : 'bg-emerald-500'
+            )}
+          ></span>
+          <span className="uppercase">{moduleStatusText}</span>
+        </div>
+      )
+    }
+  ];
 
   return (
     <AppShell
@@ -860,36 +881,6 @@ function App() {
         <TopBar
           label="GARY的数据工作台"
           title={activeModuleMeta?.label ?? '数据工具'}
-          countsSlot={(
-            <>
-              <div>
-                <p className="text-label mb-1">环境</p>
-                <p className="font-mono text-sm">本地浏览器</p>
-              </div>
-              <div>
-                <p className="text-label mb-1">记录</p>
-                <p className="font-mono text-sm">{history.length} 条</p>
-              </div>
-            </>
-          )}
-          statusSlot={(
-            <div>
-              <p className="text-label mb-1">状态</p>
-              <div className="flex items-center gap-2">
-                <div
-                  className={cn(
-                    'w-2 h-2 rounded-full',
-                    status === 'processing' || jsonStatus === 'processing' || mergeStatus === 'processing'
-                      ? 'bg-amber-400 animate-pulse'
-                      : 'bg-emerald-500'
-                  )}
-                ></div>
-                <p className="font-mono text-sm uppercase">
-                  {status === 'processing' || jsonStatus === 'processing' || mergeStatus === 'processing' ? '处理中' : '就绪'}
-                </p>
-              </div>
-            </div>
-          )}
         />
       )}
       sideNav={<SideNav modules={MODULES} activeModule={activeModule} onSelect={setActiveModule} />}
@@ -963,11 +954,12 @@ function App() {
     >
       <>
         <div className="space-y-12">
-          <div className="border-l-4 border-slate-900 pl-6 py-2">
-            <div className="text-lg md:text-xl font-medium leading-relaxed max-w-2xl text-slate-800">
-              {activeModuleMeta?.description}
-            </div>
-          </div>
+          <ModuleHeader
+            summary={activeModuleMeta?.summary ?? 'MODULE'}
+            title={activeModuleMeta?.label ?? '数据工具'}
+            description={activeModuleMeta?.description ?? null}
+            metaChips={moduleMetaChips}
+          />
 
           {activeModule === 'split_tool' && <SplitTool />}
           {activeModule === 'context_cache' && <ContextCacheCreator />}
