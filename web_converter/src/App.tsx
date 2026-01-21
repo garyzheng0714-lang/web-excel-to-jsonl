@@ -1205,20 +1205,22 @@ function App() {
                 >
                   合并文件
                 </button>
-                <button
-                  onClick={async () => {
-                    if (!mergeTempFilename) return;
-                    try {
-                      const opfsFile = await readOpfsFile(mergeTempFilename);
-                      const outputName = `merged_${Date.now()}.csv`;
-                      await saveFileToDisk(opfsFile, outputName);
-                    } catch {}
-                  }}
-                  disabled={mergeDownloadDisabled}
-                  className="btn-swiss-outline w-full"
-                >
-                  下载结果
-                </button>
+                {mergeTempFilename ? (
+                  <button
+                    onClick={async () => {
+                      if (!mergeTempFilename) return;
+                      try {
+                        const opfsFile = await readOpfsFile(mergeTempFilename);
+                        const outputName = `merged_${Date.now()}.csv`;
+                        await saveFileToDisk(opfsFile, outputName);
+                      } catch {}
+                    }}
+                    disabled={mergeDownloadDisabled}
+                    className="btn-swiss-outline w-full"
+                  >
+                    下载结果
+                  </button>
+                ) : null}
               </ResultCard>
 
               {mergeStatus !== 'idle' && (
