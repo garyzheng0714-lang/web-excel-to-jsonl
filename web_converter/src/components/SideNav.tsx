@@ -28,13 +28,14 @@ export function SideNav({ modules, activeModule, onSelect }: SideNavProps) {
             <button
               key={module.id}
               onClick={() => onSelect(module.id)}
+              aria-label={module.label}
               className={cn(
                 'w-12 h-12 flex items-center justify-center rounded-none transition-all group relative',
                 isActive ? 'bg-slate-900 text-white' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-900'
               )}
             >
               <Icon className="w-5 h-5" />
-              <span className="absolute left-14 bg-slate-900 text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 font-mono">
+              <span className="absolute left-14 bg-slate-900 text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 font-mono">
                 {module.label}
               </span>
             </button>
