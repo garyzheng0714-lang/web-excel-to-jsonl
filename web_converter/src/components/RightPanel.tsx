@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 
 type HistoryItem = {
@@ -37,6 +37,7 @@ function formatBytes(bytes?: number) {
 export function RightPanel({ history, onPreview, onDownload, onClear }: RightPanelProps) {
   const recentItems = history.slice(0, 3);
   const historyItems = history.slice(3);
+  const [isHistoryCollapsed, setIsHistoryCollapsed] = useState(false);
 
   return (
     <aside className="space-y-8">
@@ -94,36 +95,46 @@ export function RightPanel({ history, onPreview, onDownload, onClear }: RightPan
         <div className="border-t border-slate-100 pt-5">
           <div className="flex items-center justify-between mb-3">
             <p className="font-mono text-xs uppercase tracking-wider text-slate-400">历史记录</p>
-            <span className="font-mono text-[10px] text-slate-400">{historyItems.length} 条</span>
-          </div>
-          {historyItems.length === 0 ? (
-            <div className="py-4 text-center font-mono text-[10px] text-slate-400">暂无更多记录</div>
-          ) : (
-            <div className="space-y-3 max-h-[240px] overflow-y-auto pr-2">
-              {historyItems.map((item) => (
-                <div
-                  key={item.id}
-                  className="group relative border-l-2 border-slate-200 pl-4 py-1 hover:border-slate-900 transition-colors"
-                >
-                  <p className="font-mono text-[10px] text-slate-400 mb-1">{formatTime(item.createdAt)}</p>
-                  <p className="font-medium text-sm text-slate-900 leading-tight mb-2 break-all">{item.outputName}</p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => onPreview(item)}
-                      className="text-[10px] font-mono font-bold text-slate-500 hover:text-[#ff4d00] uppercase flex items-center gap-1"
-                    >
-                      查看 <ArrowRight className="w-3 h-3" />
-                    </button>
-                    <button
-                      onClick={() => onDownload(item)}
-                      className="text-[10px] font-mono font-bold text-slate-500 hover:text-[#ff4d00] uppercase"
-                    >
-                      保存
-                    </button>
-                  </div>
-                </div>
-              ))}
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-[10px] text-slate-400">{historyItems.length} 条</span>
+              <button
+                onClick={() => setIsHistoryCollapsed((prev) => !prev)}
+                className="text-[10px] font-mono font-bold text-slate-500 hover:text-[#ff4d00] uppercase"
+              >
+                {isHistoryCollapsed ? '展开' : '收起'}
+              </button>
             </div>
+          </div>
+          {!isHistoryCollapsed && (
+            historyItems.length === 0 ? (
+              <div className="py-4 text-center font-mono text-[10px] text-slate-400">暂无更多记录</div>
+            ) : (
+              <div className="space-y-3 max-h-[240px] overflow-y-auto pr-2">
+                {historyItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="group relative border-l-2 border-slate-200 pl-4 py-1 hover:border-slate-900 transition-colors"
+                  >
+                    <p className="font-mono text-[10px] text-slate-400 mb-1">{formatTime(item.createdAt)}</p>
+                    <p className="font-medium text-sm text-slate-900 leading-tight mb-2 break-all">{item.outputName}</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => onPreview(item)}
+                        className="text-[10px] font-mono font-bold text-slate-500 hover:text-[#ff4d00] uppercase flex items-center gap-1"
+                      >
+                        查看 <ArrowRight className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => onDownload(item)}
+                        className="text-[10px] font-mono font-bold text-slate-500 hover:text-[#ff4d00] uppercase"
+                      >
+                        保存
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
           )}
         </div>
       </div>
