@@ -62,6 +62,10 @@ body::before {
     border-color: var(--border-subtle);
   }
 
+  .modal {
+    @apply bg-white rounded-lg border border-slate-200 shadow-[0_24px_80px_rgba(15,23,42,0.25)];
+  }
+
   .chip {
     @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold;
     background: var(--accent-soft);

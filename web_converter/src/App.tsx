@@ -1162,7 +1162,7 @@ function App() {
 
         {previewItem && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur-sm p-4 md:p-12 animate-in fade-in duration-200">
-            <div className="w-full h-full max-w-6xl bg-white border-2 border-slate-900 shadow-[12px_12px_0px_0px_rgba(26,26,26,1)] flex flex-col">
+            <div className="modal w-full h-full max-w-6xl flex flex-col">
               <div className="flex items-center justify-between p-6 border-b-2 border-slate-900 bg-slate-50">
                 <div>
                   <p className="font-mono text-xs text-slate-500 uppercase mb-1">预览模式</p>
@@ -1170,7 +1170,7 @@ function App() {
                 </div>
                 <button
                   onClick={closePreview}
-                  className="w-10 h-10 flex items-center justify-center border-2 border-slate-900 hover:bg-slate-900 hover:text-white transition-colors"
+                  className="btn-ghost w-10 h-10 p-0"
                 >
                   <X className="w-6 h-6" />
                 </button>
