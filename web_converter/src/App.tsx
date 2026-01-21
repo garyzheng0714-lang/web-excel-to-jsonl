@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Upload, FileType, X, Loader2, Download, Trash2, FileSpreadsheet, FileJson, Eye, Layers, Scissors, BoxSelect, ArrowRight, FileText } from 'lucide-react';
+import { FileType, X, Loader2, Download, Trash2, FileSpreadsheet, FileJson, Eye, Layers, Scissors, BoxSelect, ArrowRight, FileText } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import streamSaver from 'streamsaver';
@@ -9,6 +9,7 @@ import { TopBar } from './components/TopBar';
 import { ModuleHeader } from './components/ModuleHeader';
 import { SideNav } from './components/SideNav';
 import { RightPanel } from './components/RightPanel';
+import { UploadCard } from './components/UploadCard';
 import { ContextCacheCreator } from './ContextCacheCreator';
 import { SplitTool } from './SplitTool';
 import { CsvTemplateFiller } from './CsvTemplateFiller';
@@ -967,44 +968,28 @@ function App() {
 
           {activeModule === 'excel_to_jsonl' && (
             <div className="space-y-8">
-              <div className="group relative w-full h-64 border-2 border-dashed border-slate-300 hover:border-slate-900 transition-colors bg-white flex flex-col items-center justify-center cursor-pointer">
-                {!file ? (
-                  <>
-                    <input
-                      type="file"
-                      accept=".csv,.xlsx,.xls"
-                      onChange={handleFileChange}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                    <Upload className="w-12 h-12 text-slate-300 mb-6 group-hover:text-slate-900 transition-colors" />
-                    <p className="font-mono text-sm font-bold text-slate-900">拖放文件至此</p>
-                    <p className="text-xs text-slate-400 mt-2 font-mono uppercase">支持 CSV, XLSX (最大 5GB)</p>
-                  </>
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 relative">
-                    <button
-                      onClick={handleRemoveFile}
-                      className="absolute top-4 right-4 p-2 hover:bg-slate-200 rounded-none transition-colors"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                    <FileSpreadsheet className="w-16 h-16 text-slate-900 mb-4" />
-                    <p className="font-mono text-lg font-bold text-slate-900">{file.name}</p>
-                    <p className="font-mono text-sm text-slate-500 mt-1">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
-                  </div>
-                )}
-              </div>
+              <UploadCard
+                file={file}
+                accept=".csv,.xlsx,.xls"
+                onChange={handleFileChange}
+                onRemove={handleRemoveFile}
+                idleTitle="拖放文件至此"
+                idleSubtitle="支持 CSV, XLSX (最大 5GB)"
+                fileIcon={<FileSpreadsheet className="w-16 h-16 text-slate-900" />}
+                errorMessage={status === 'error' ? errorMessage : undefined}
+                inputLabel="Upload CSV or Excel file"
+              />
 
               {file && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <button
                     onClick={startConversion}
                     disabled={status === 'processing' || isDownloading}
-                    className="btn-swiss-primary"
+                    className="btn-primary"
                   >
                     {status === 'processing' ? '处理中...' : '开始转换'}
                   </button>
-                  <button onClick={downloadCurrent} disabled={downloadDisabled} className="btn-swiss-outline">
+                  <button onClick={downloadCurrent} disabled={downloadDisabled} className="btn-secondary">
                     下载 JSONL
                   </button>
                 </div>
@@ -1013,13 +998,6 @@ function App() {
               {status === 'processing' && (
                 <div className="w-full bg-slate-100 h-1 mt-4 overflow-hidden">
                   <div className="h-full bg-[#ff4d00] animate-[progress_2s_ease-in-out_infinite] w-full origin-left"></div>
-                </div>
-              )}
-
-              {status === 'error' && (
-                <div className="p-4 border-2 border-red-500 bg-red-50 text-red-600 font-mono text-sm">
-                  <p className="font-bold">错误：</p>
-                  <p>{errorMessage}</p>
                 </div>
               )}
 
@@ -1045,40 +1023,24 @@ function App() {
 
           {activeModule === 'json_to_excel' && (
             <div className="space-y-8">
-              <div className="group relative w-full h-64 border-2 border-dashed border-slate-300 hover:border-slate-900 transition-colors bg-white flex flex-col items-center justify-center cursor-pointer">
-                {!jsonFile ? (
-                  <>
-                    <input
-                      type="file"
-                      accept=".json,.jsonl"
-                      onChange={handleJsonFileChange}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                    <Upload className="w-12 h-12 text-slate-300 mb-6 group-hover:text-slate-900 transition-colors" />
-                    <p className="font-mono text-sm font-bold text-slate-900">拖放 JSON 文件</p>
-                    <p className="text-xs text-slate-400 mt-2 font-mono uppercase">支持 JSON, JSONL</p>
-                  </>
-                ) : (
-                  <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 relative">
-                    <button
-                      onClick={handleRemoveJsonFile}
-                      className="absolute top-4 right-4 p-2 hover:bg-slate-200 rounded-none transition-colors"
-                    >
-                      <X className="w-5 h-5" />
-                    </button>
-                    <FileJson className="w-16 h-16 text-slate-900 mb-4" />
-                    <p className="font-mono text-lg font-bold text-slate-900">{jsonFile.name}</p>
-                    <p className="font-mono text-sm text-slate-500 mt-1">{(jsonFile.size / (1024 * 1024)).toFixed(2)} MB</p>
-                  </div>
-                )}
-              </div>
+              <UploadCard
+                file={jsonFile}
+                accept=".json,.jsonl"
+                onChange={handleJsonFileChange}
+                onRemove={handleRemoveJsonFile}
+                idleTitle="拖放 JSON 文件"
+                idleSubtitle="支持 JSON, JSONL"
+                fileIcon={<FileJson className="w-16 h-16 text-slate-900" />}
+                errorMessage={jsonStatus === 'error' ? jsonErrorMessage : undefined}
+                inputLabel="Upload JSON file"
+              />
 
               {jsonFile && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <button
                     onClick={startJsonToExcel}
                     disabled={jsonStatus === 'processing' || isDownloading}
-                    className="btn-swiss-primary"
+                    className="btn-primary"
                   >
                     转换为 EXCEL
                   </button>
@@ -1098,7 +1060,7 @@ function App() {
                       }
                     }}
                     disabled={jsonDownloadDisabled}
-                    className="btn-swiss-outline"
+                    className="btn-secondary"
                   >
                     下载 CSV
                   </button>
