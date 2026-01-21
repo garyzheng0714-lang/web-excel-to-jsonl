@@ -111,10 +111,10 @@ export function RightPanel({ history, onPreview, onDownload, onClear }: RightPan
               )}
             </div>
           </div>
-          {!isHistoryCollapsed && (
-            historyItems.length === 0 ? (
-              <div className="py-4 text-center font-mono text-[10px] text-slate-400">暂无更多记录</div>
-            ) : (
+          {historyItems.length === 0 ? (
+            <div className="py-4 text-center font-mono text-[10px] text-slate-400">暂无更多记录</div>
+          ) : (
+            !isHistoryCollapsed && (
               <div id={historyListId} className="space-y-3 max-h-[240px] overflow-y-auto pr-2">
                 {historyItems.map((item) => (
                   <div
