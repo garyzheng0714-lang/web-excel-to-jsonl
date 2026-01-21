@@ -37,7 +37,9 @@ export function UploadCard({
         className={cn(
           'upload-card group relative w-full h-64 border-2 border-dashed transition-colors flex flex-col items-center justify-center',
           file ? 'cursor-default' : 'cursor-pointer',
-          hasError ? 'border-red-300 bg-red-50/40' : 'border-slate-300 hover:border-slate-900 bg-white'
+          hasError
+            ? 'upload-card--error border-red-300 bg-red-50/40'
+            : 'border-slate-300 hover:border-slate-900 bg-white'
         )}
       >
         {!file ? (

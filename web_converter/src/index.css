@@ -145,4 +145,9 @@ body::before {
     border-color: var(--accent-secondary);
     box-shadow: 0 0 0 3px var(--focus-ring);
   }
+
+  .upload-card--error:focus-within {
+    border-color: #fca5a5;
+    box-shadow: 0 0 0 3px var(--focus-ring);
+  }
 }
