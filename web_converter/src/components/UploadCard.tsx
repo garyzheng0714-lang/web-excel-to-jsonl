@@ -35,7 +35,7 @@ export function UploadCard({
     <div className="space-y-4">
       <div
         className={cn(
-          'group relative w-full h-64 border-2 border-dashed transition-colors flex flex-col items-center justify-center',
+          'upload-card group relative w-full h-64 border-2 border-dashed transition-colors flex flex-col items-center justify-center',
           file ? 'cursor-default' : 'cursor-pointer',
           hasError ? 'border-red-300 bg-red-50/40' : 'border-slate-300 hover:border-slate-900 bg-white'
         )}
@@ -76,7 +76,10 @@ export function UploadCard({
         )}
       </div>
       {hasError ? (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div
+          role="alert"
+          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+        >
           <p className="text-label text-red-700">错误</p>
           <p className="font-mono text-sm">{errorMessage}</p>
         </div>
