@@ -1,11 +1,12 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Upload, FileType, X, Loader2, Download, Trash2, FileSpreadsheet, FileJson, Eye, Layers, Scissors, BoxSelect, ArrowRight } from 'lucide-react';
+import { Upload, FileType, X, Loader2, Download, Trash2, FileSpreadsheet, FileJson, Eye, Layers, Scissors, BoxSelect, ArrowRight, FileText } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import streamSaver from 'streamsaver';
 import { cn } from './lib/utils';
 import { ContextCacheCreator } from './ContextCacheCreator';
 import { SplitTool } from './SplitTool';
+import { CsvTemplateFiller } from './CsvTemplateFiller';
 
 type HistoryItem = {
   id: string;
@@ -222,7 +223,7 @@ const VirtualText = ({ content }: { content: string }) => {
   );
 };
 
-type ModuleId = 'excel_to_jsonl' | 'json_to_excel' | 'merge_csv' | 'context_cache' | 'split_tool';
+type ModuleId = 'excel_to_jsonl' | 'json_to_excel' | 'merge_csv' | 'context_cache' | 'split_tool' | 'csv_template_filler';
 
 const MODULES: Array<{
   id: ModuleId;
@@ -245,6 +246,13 @@ const MODULES: Array<{
         </span>
       </p>
     ),
+  },
+  {
+    id: 'csv_template_filler',
+    label: 'CSV 模板填充',
+    summary: '批量内容生成',
+    icon: FileText,
+    description: <p>使用自定义模板和 CSV 数据批量生成文本内容。</p>,
   },
   {
     id: 'json_to_excel',
@@ -918,6 +926,7 @@ function App() {
 
             {activeModule === 'split_tool' && <SplitTool />}
             {activeModule === 'context_cache' && <ContextCacheCreator />}
+            {activeModule === 'csv_template_filler' && <CsvTemplateFiller />}
 
             {activeModule === 'excel_to_jsonl' && (
               <div className="space-y-8">
