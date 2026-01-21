@@ -24,11 +24,16 @@
   --success: #1f7a66;
   --warning: #b7791f;
   --danger: #b42318;
+  --bg-gradient-start: #f7f9fc;
+  --bg-gradient-end: #eef3f8;
+  --glow-1: rgba(63, 90, 122, 0.06);
+  --glow-2: rgba(43, 58, 74, 0.05);
+  --focus-ring: rgba(63, 90, 122, 0.22);
 }
 
 body {
   font-family: var(--font-sans);
-  background: linear-gradient(180deg, #f7f9fc 0%, #eef3f8 100%);
+  background: linear-gradient(180deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
   color: var(--fg-primary);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
@@ -38,8 +43,8 @@ body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background-image: radial-gradient(circle at 20% 20%, rgba(63, 90, 122, 0.06) 0, transparent 45%),
-    radial-gradient(circle at 80% 10%, rgba(43, 58, 74, 0.05) 0, transparent 40%);
+  background-image: radial-gradient(circle at 20% 20%, var(--glow-1) 0, transparent 45%),
+    radial-gradient(circle at 80% 10%, var(--glow-2) 0, transparent 40%);
   pointer-events: none;
   z-index: -1;
 }
@@ -70,7 +75,7 @@ body::before {
   }
 
   .text-label {
-    @apply text-xs font-semibold uppercase tracking-[0.2em];
+    @apply text-xs font-semibold uppercase tracking-[0.16em];
     color: var(--fg-secondary);
   }
 
@@ -87,7 +92,7 @@ body::before {
 
   .input-field:focus {
     border-color: var(--accent-secondary);
-    box-shadow: 0 0 0 3px rgba(63, 90, 122, 0.18);
+    box-shadow: 0 0 0 3px var(--focus-ring);
   }
 
   .btn-primary {
@@ -98,6 +103,11 @@ body::before {
 
   .btn-primary:hover {
     background: var(--accent-secondary);
+  }
+
+  .btn-primary:focus-visible {
+    box-shadow: 0 0 0 3px var(--focus-ring);
+    outline: none;
   }
 
   .btn-secondary {
@@ -111,6 +121,11 @@ body::before {
     background: var(--bg-muted);
   }
 
+  .btn-secondary:focus-visible {
+    box-shadow: 0 0 0 3px var(--focus-ring);
+    outline: none;
+  }
+
   .btn-ghost {
     @apply inline-flex items-center justify-center rounded-lg px-5 py-3 text-sm font-semibold transition-colors;
     color: var(--fg-secondary);
@@ -119,5 +134,10 @@ body::before {
   .btn-ghost:hover {
     background: var(--bg-muted);
     color: var(--fg-primary);
+  }
+
+  .btn-ghost:focus-visible {
+    box-shadow: 0 0 0 3px var(--focus-ring);
+    outline: none;
   }
 }
