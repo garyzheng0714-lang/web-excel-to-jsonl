@@ -1,75 +1,123 @@
-@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Manrope:wght@200;300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Source+Serif+4:wght@500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --font-sans: 'Manrope', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
-  
-  --bg-app: #f4f4f0; /* Off-white paper */
-  --fg-primary: #1a1a1a;
-  --fg-secondary: #5a5a5a;
-  --border-strong: #1a1a1a;
-  --border-subtle: #d4d4d0;
-  
-  --accent-color: #ff4d00; /* International Orange */
-  --accent-surface: #ffece6;
+  --font-sans: 'IBM Plex Sans', sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+  --font-serif: 'Source Serif 4', serif;
+
+  --bg-app: #f4f6f9;
+  --bg-panel: #ffffff;
+  --bg-muted: #eef2f6;
+  --fg-primary: #1f2a37;
+  --fg-secondary: #52606d;
+  --fg-muted: #8a97a5;
+  --border-strong: #1f2a37;
+  --border-subtle: #d8dee6;
+
+  --accent-primary: #2b3a4a;
+  --accent-secondary: #3f5a7a;
+  --accent-soft: #e6edf5;
+  --success: #1f7a66;
+  --warning: #b7791f;
+  --danger: #b42318;
 }
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--bg-app);
+  background: linear-gradient(180deg, #f7f9fc 0%, #eef3f8 100%);
   color: var(--fg-primary);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
 }
 
-/* Swiss Grid overlay effect (optional, keep it subtle) */
 body::before {
   content: '';
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-image: linear-gradient(var(--border-subtle) 1px, transparent 1px),
-  linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
-  background-size: 40px 40px;
-  background-position: center 0;
-  opacity: 0.05;
+  inset: 0;
+  background-image: radial-gradient(circle at 20% 20%, rgba(63, 90, 122, 0.06) 0, transparent 45%),
+    radial-gradient(circle at 80% 10%, rgba(43, 58, 74, 0.05) 0, transparent 40%);
   pointer-events: none;
   z-index: -1;
 }
 
 @layer components {
-  /* Brutalist / Swiss Card */
-  .swiss-card {
-    @apply bg-white border border-slate-900 rounded-none shadow-[4px_4px_0px_0px_rgba(26,26,26,1)];
-  }
-  
-  .swiss-card-hover {
-    @apply transition-transform hover:-translate-y-1 hover:shadow-[6px_6px_0px_0px_rgba(26,26,26,1)];
+  .panel {
+    @apply rounded-2xl border shadow-sm;
+    background: var(--bg-panel);
+    border-color: var(--border-subtle);
   }
 
-  /* Input fields */
-  .swiss-input {
-    @apply w-full bg-white border-b-2 border-slate-200 px-0 py-3 text-lg font-medium text-slate-900 focus:border-slate-900 focus:outline-none transition-colors placeholder:text-slate-400 font-mono;
+  .card {
+    @apply rounded-xl border p-6 shadow-sm;
+    background: var(--bg-panel);
+    border-color: var(--border-subtle);
   }
 
-  /* Typography */
-  .text-display {
-    @apply font-extrabold tracking-tight text-slate-900;
+  .chip {
+    @apply inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold;
+    background: var(--accent-soft);
+    color: var(--accent-secondary);
   }
-  
+
+  .text-title {
+    @apply text-3xl font-semibold tracking-tight;
+    font-family: var(--font-serif);
+    color: var(--fg-primary);
+  }
+
   .text-label {
-    @apply font-mono text-xs uppercase tracking-wider text-slate-500 font-medium;
+    @apply text-xs font-semibold uppercase tracking-[0.2em];
+    color: var(--fg-secondary);
   }
 
-  /* Buttons */
-  .btn-swiss-primary {
-    @apply inline-flex items-center justify-center bg-slate-900 text-white px-6 py-3 font-mono text-sm font-medium hover:bg-slate-800 active:translate-y-[1px] transition-all;
+  .input-field {
+    @apply w-full rounded-lg border px-4 py-3 text-sm font-medium transition-colors focus:outline-none;
+    background: var(--bg-panel);
+    border-color: var(--border-subtle);
+    color: var(--fg-primary);
   }
 
-  .btn-swiss-outline {
-    @apply inline-flex items-center justify-center bg-transparent border-2 border-slate-900 text-slate-900 px-6 py-3 font-mono text-sm font-bold hover:bg-slate-900 hover:text-white transition-colors;
+  .input-field::placeholder {
+    color: var(--fg-muted);
+  }
+
+  .input-field:focus {
+    border-color: var(--accent-secondary);
+    box-shadow: 0 0 0 3px rgba(63, 90, 122, 0.18);
+  }
+
+  .btn-primary {
+    @apply inline-flex items-center justify-center rounded-lg px-5 py-3 text-sm font-semibold transition-colors;
+    background: var(--accent-primary);
+    color: #ffffff;
+  }
+
+  .btn-primary:hover {
+    background: var(--accent-secondary);
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center rounded-lg border px-5 py-3 text-sm font-semibold transition-colors;
+    background: var(--accent-soft);
+    border-color: var(--border-subtle);
+    color: var(--accent-secondary);
+  }
+
+  .btn-secondary:hover {
+    background: var(--bg-muted);
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center rounded-lg px-5 py-3 text-sm font-semibold transition-colors;
+    color: var(--fg-secondary);
+  }
+
+  .btn-ghost:hover {
+    background: var(--bg-muted);
+    color: var(--fg-primary);
   }
 }
