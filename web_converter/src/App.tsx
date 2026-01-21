@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { FileType, X, Loader2, Download, Trash2, FileSpreadsheet, FileJson, Eye, Layers, Scissors, BoxSelect, ArrowRight, FileText } from 'lucide-react';
+import { X, Loader2, FileSpreadsheet, FileJson, Layers, Scissors, BoxSelect, ArrowRight, FileText } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import streamSaver from 'streamsaver';
@@ -10,6 +10,8 @@ import { ModuleHeader } from './components/ModuleHeader';
 import { SideNav } from './components/SideNav';
 import { RightPanel } from './components/RightPanel';
 import { UploadCard } from './components/UploadCard';
+import { ResultCard } from './components/ResultCard';
+import { StatusPanel, type StatusVariant } from './components/StatusPanel';
 import { ContextCacheCreator } from './ContextCacheCreator';
 import { SplitTool } from './SplitTool';
 import { CsvTemplateFiller } from './CsvTemplateFiller';
@@ -875,6 +877,59 @@ function App() {
       )
     }
   ];
+  const statusLabels: Record<StatusVariant, string> = {
+    idle: 'Idle',
+    processing: 'Processing',
+    success: 'Success',
+    warning: 'Warning',
+    error: 'Error',
+  };
+  const excelStatusVariant: StatusVariant = status === 'completed'
+    ? warnings.length > 0
+      ? 'warning'
+      : 'success'
+    : status === 'processing'
+      ? 'processing'
+      : status === 'error'
+        ? 'error'
+        : 'idle';
+  const excelStatusMessage = status === 'processing'
+    ? `Processing ${processedCount} rows.`
+    : status === 'completed'
+      ? `${processedCount} rows processed.`
+      : status === 'error'
+        ? errorMessage || 'Conversion failed.'
+        : '';
+  const jsonStatusVariant: StatusVariant = jsonStatus === 'completed'
+    ? 'success'
+    : jsonStatus === 'processing'
+      ? 'processing'
+      : jsonStatus === 'error'
+        ? 'error'
+        : 'idle';
+  const jsonStatusMessage = jsonStatus === 'processing'
+    ? `Processing ${jsonProcessedCount} rows.`
+    : jsonStatus === 'completed'
+      ? `${jsonProcessedCount} rows processed.`
+      : jsonStatus === 'error'
+        ? jsonErrorMessage || 'Conversion failed.'
+        : '';
+  const jsonStatusDetails = jsonStage ? [`Stage: ${jsonStage}`] : [];
+  const mergeStatusVariant: StatusVariant = mergeStatus === 'completed'
+    ? 'success'
+    : mergeStatus === 'processing'
+      ? 'processing'
+      : mergeStatus === 'error'
+        ? 'error'
+        : 'idle';
+  const mergeStatusMessage = mergeStatus === 'processing'
+    ? `Processing ${mergeProcessedCount} rows.`
+    : mergeStatus === 'completed'
+      ? `${mergeProcessedCount} rows processed.`
+      : mergeStatus === 'error'
+        ? mergeErrorMessage || 'Merge failed.'
+        : '';
+  const mergeStatusDetails = mergeStage ? [`Stage: ${mergeStage}`] : [];
 
   return (
     <AppShell
@@ -976,47 +1031,38 @@ function App() {
                 idleTitle="拖放文件至此"
                 idleSubtitle="支持 CSV, XLSX (最大 5GB)"
                 fileIcon={<FileSpreadsheet className="w-16 h-16 text-slate-900" />}
-                errorMessage={status === 'error' ? errorMessage : undefined}
                 inputLabel="Upload CSV or Excel file"
               />
 
               {file && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <button
-                    onClick={startConversion}
-                    disabled={status === 'processing' || isDownloading}
-                    className="btn-primary"
-                  >
-                    {status === 'processing' ? '处理中...' : '开始转换'}
-                  </button>
-                  <button onClick={downloadCurrent} disabled={downloadDisabled} className="btn-secondary">
-                    下载 JSONL
-                  </button>
-                </div>
-              )}
-
-              {status === 'processing' && (
-                <div className="w-full bg-slate-100 h-1 mt-4 overflow-hidden">
-                  <div className="h-full bg-[#ff4d00] animate-[progress_2s_ease-in-out_infinite] w-full origin-left"></div>
-                </div>
-              )}
-
-              {status === 'completed' && (
-                <div className="p-6 bg-[#f0fff4] border border-[#22c55e]">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-3 h-3 bg-[#22c55e] rounded-none"></div>
-                    <p className="font-mono font-bold text-[#15803d] uppercase">成功</p>
+                <ResultCard
+                  title="JSONL Output"
+                  description="Run conversion, then download the JSONL file."
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button
+                      onClick={startConversion}
+                      disabled={status === 'processing' || isDownloading}
+                      className="btn-primary"
+                    >
+                      {status === 'processing' ? '处理中...' : '开始转换'}
+                    </button>
+                    <button onClick={downloadCurrent} disabled={downloadDisabled} className="btn-secondary">
+                      下载 JSONL
+                    </button>
                   </div>
-                  <p className="font-mono text-sm text-[#15803d]">{processedCount} 行已处理。</p>
-                  {warnings.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-[#86efac]">
-                      <p className="font-mono text-xs font-bold text-[#15803d] mb-2">警告：</p>
-                      <ul className="list-disc list-inside font-mono text-xs text-[#15803d] opacity-80">
-                        {warnings.slice(0, 5).map((w, i) => <li key={i}>{w}</li>)}
-                      </ul>
-                    </div>
-                  )}
-                </div>
+                </ResultCard>
+              )}
+
+              {status !== 'idle' && (
+                <StatusPanel
+                  status={excelStatusVariant}
+                  title={statusLabels[excelStatusVariant]}
+                  message={excelStatusMessage || undefined}
+                  warnings={warnings.length > 0 ? warnings : undefined}
+                  warningsTitle="Warnings"
+                  showProgress={status === 'processing'}
+                />
               )}
             </div>
           )}
@@ -1031,51 +1077,54 @@ function App() {
                 idleTitle="拖放 JSON 文件"
                 idleSubtitle="支持 JSON, JSONL"
                 fileIcon={<FileJson className="w-16 h-16 text-slate-900" />}
-                errorMessage={jsonStatus === 'error' ? jsonErrorMessage : undefined}
                 inputLabel="Upload JSON file"
               />
 
               {jsonFile && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <button
-                    onClick={startJsonToExcel}
-                    disabled={jsonStatus === 'processing' || isDownloading}
-                    className="btn-primary"
-                  >
-                    转换为 EXCEL
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (!jsonTempFilename || !jsonFile || isDownloading) return;
-                      setIsDownloading(true);
-                      setDownloadError('');
-                      try {
-                        const opfsFile = await readOpfsFile(jsonTempFilename);
-                        const outputName = jsonFile.name.replace(/\.[^/.]+$/, '') + '.csv';
-                        await saveFileToDisk(opfsFile, outputName);
-                      } catch (err: any) {
-                        if (err?.name !== 'AbortError') setDownloadError(err?.message || 'Download failed');
-                      } finally {
-                        setIsDownloading(false);
-                      }
-                    }}
-                    disabled={jsonDownloadDisabled}
-                    className="btn-secondary"
-                  >
-                    下载 CSV
-                  </button>
-                </div>
+                <ResultCard
+                  title="CSV Output"
+                  description="Run conversion, then download the CSV file."
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button
+                      onClick={startJsonToExcel}
+                      disabled={jsonStatus === 'processing' || isDownloading}
+                      className="btn-primary"
+                    >
+                      转换为 EXCEL
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!jsonTempFilename || !jsonFile || isDownloading) return;
+                        setIsDownloading(true);
+                        setDownloadError('');
+                        try {
+                          const opfsFile = await readOpfsFile(jsonTempFilename);
+                          const outputName = jsonFile.name.replace(/\.[^/.]+$/, '') + '.csv';
+                          await saveFileToDisk(opfsFile, outputName);
+                        } catch (err: any) {
+                          if (err?.name !== 'AbortError') setDownloadError(err?.message || 'Download failed');
+                        } finally {
+                          setIsDownloading(false);
+                        }
+                      }}
+                      disabled={jsonDownloadDisabled}
+                      className="btn-secondary"
+                    >
+                      下载 CSV
+                    </button>
+                  </div>
+                </ResultCard>
               )}
 
-              {jsonStatus === 'processing' && (
-                <div className="space-y-2">
-                  <div className="w-full bg-slate-100 h-1 overflow-hidden">
-                    <div className="h-full bg-[#ff4d00] animate-[progress_2s_ease-in-out_infinite] w-full origin-left"></div>
-                  </div>
-                  <p className="font-mono text-xs text-center text-slate-500">
-                    {jsonStage || 'Processing'} ({jsonProcessedCount} rows)
-                  </p>
-                </div>
+              {jsonStatus !== 'idle' && (
+                <StatusPanel
+                  status={jsonStatusVariant}
+                  title={statusLabels[jsonStatusVariant]}
+                  message={jsonStatusMessage || undefined}
+                  details={jsonStatusDetails.length > 0 ? jsonStatusDetails : undefined}
+                  showProgress={jsonStatus === 'processing'}
+                />
               )}
             </div>
           )}
@@ -1142,33 +1191,45 @@ function App() {
                       ))
                     )}
                   </div>
-
-                  <div className="space-y-3">
-                    <button
-                      onClick={startMerge}
-                      disabled={mergeFiles.length < 2 || mergeStatus === 'processing' || isDownloading}
-                      className="btn-swiss-primary w-full"
-                    >
-                      合并文件
-                    </button>
-                    {mergeTempFilename && (
-                      <button
-                        onClick={async () => {
-                          if (!mergeTempFilename) return;
-                          try {
-                            const opfsFile = await readOpfsFile(mergeTempFilename);
-                            const outputName = `merged_${Date.now()}.csv`;
-                            await saveFileToDisk(opfsFile, outputName);
-                          } catch {}
-                        }}
-                        className="btn-swiss-outline w-full"
-                      >
-                        下载结果
-                      </button>
-                    )}
-                  </div>
                 </div>
               </div>
+
+              <ResultCard
+                title="Merge Output"
+                description="Merge files, then download the combined CSV."
+              >
+                <button
+                  onClick={startMerge}
+                  disabled={mergeFiles.length < 2 || mergeStatus === 'processing' || isDownloading}
+                  className="btn-swiss-primary w-full"
+                >
+                  合并文件
+                </button>
+                <button
+                  onClick={async () => {
+                    if (!mergeTempFilename) return;
+                    try {
+                      const opfsFile = await readOpfsFile(mergeTempFilename);
+                      const outputName = `merged_${Date.now()}.csv`;
+                      await saveFileToDisk(opfsFile, outputName);
+                    } catch {}
+                  }}
+                  disabled={mergeDownloadDisabled}
+                  className="btn-swiss-outline w-full"
+                >
+                  下载结果
+                </button>
+              </ResultCard>
+
+              {mergeStatus !== 'idle' && (
+                <StatusPanel
+                  status={mergeStatusVariant}
+                  title={statusLabels[mergeStatusVariant]}
+                  message={mergeStatusMessage || undefined}
+                  details={mergeStatusDetails.length > 0 ? mergeStatusDetails : undefined}
+                  showProgress={mergeStatus === 'processing'}
+                />
+              )}
             </div>
           )}
         </div>
