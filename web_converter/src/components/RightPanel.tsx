@@ -38,6 +38,7 @@ export function RightPanel({ history, onPreview, onDownload, onClear }: RightPan
   const recentItems = history.slice(0, 3);
   const historyItems = history.slice(3);
   const [isHistoryCollapsed, setIsHistoryCollapsed] = useState(false);
+  const historyListId = 'right-panel-history-list';
 
   return (
     <aside className="space-y-8">
@@ -97,19 +98,24 @@ export function RightPanel({ history, onPreview, onDownload, onClear }: RightPan
             <p className="font-mono text-xs uppercase tracking-wider text-slate-400">历史记录</p>
             <div className="flex items-center gap-3">
               <span className="font-mono text-[10px] text-slate-400">{historyItems.length} 条</span>
-              <button
-                onClick={() => setIsHistoryCollapsed((prev) => !prev)}
-                className="text-[10px] font-mono font-bold text-slate-500 hover:text-[#ff4d00] uppercase"
-              >
-                {isHistoryCollapsed ? '展开' : '收起'}
-              </button>
+              {historyItems.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setIsHistoryCollapsed((prev) => !prev)}
+                  aria-expanded={!isHistoryCollapsed}
+                  aria-controls={historyListId}
+                  className="text-[10px] font-mono font-bold text-slate-500 hover:text-[#ff4d00] uppercase"
+                >
+                  {isHistoryCollapsed ? '展开历史' : '收起历史'}
+                </button>
+              )}
             </div>
           </div>
           {!isHistoryCollapsed && (
             historyItems.length === 0 ? (
               <div className="py-4 text-center font-mono text-[10px] text-slate-400">暂无更多记录</div>
             ) : (
-              <div className="space-y-3 max-h-[240px] overflow-y-auto pr-2">
+              <div id={historyListId} className="space-y-3 max-h-[240px] overflow-y-auto pr-2">
                 {historyItems.map((item) => (
                   <div
                     key={item.id}
