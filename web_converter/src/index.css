@@ -63,7 +63,7 @@ body::before {
   }
 
   .modal {
-    @apply bg-white rounded-lg border border-slate-200 shadow-[0_24px_80px_rgba(15,23,42,0.25)];
+    @apply bg-white rounded-lg border border-slate-300 shadow-[0_24px_80px_rgba(15,23,42,0.25)];
   }
 
   .chip {
@@ -131,12 +131,14 @@ body::before {
   }
 
   .btn-ghost {
-    @apply inline-flex items-center justify-center rounded-lg px-5 py-3 text-sm font-semibold transition-colors;
+    @apply inline-flex items-center justify-center rounded-lg border px-5 py-3 text-sm font-semibold transition-colors;
+    border-color: var(--border-subtle);
     color: var(--fg-secondary);
   }
 
   .btn-ghost:hover {
     background: var(--bg-muted);
+    border-color: #cbd5e1;
     color: var(--fg-primary);
   }
 
