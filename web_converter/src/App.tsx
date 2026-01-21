@@ -4,6 +4,10 @@ import * as XLSX from 'xlsx';
 import Papa from 'papaparse';
 import streamSaver from 'streamsaver';
 import { cn } from './lib/utils';
+import { AppShell } from './components/AppShell';
+import { TopBar } from './components/TopBar';
+import { SideNav } from './components/SideNav';
+import { RightPanel } from './components/RightPanel';
 import { ContextCacheCreator } from './ContextCacheCreator';
 import { SplitTool } from './SplitTool';
 import { CsvTemplateFiller } from './CsvTemplateFiller';
@@ -851,416 +855,406 @@ function App() {
   const ActiveModuleIcon = activeModuleMeta?.icon;
 
   return (
-    <div className="min-h-screen text-slate-900 pb-20 selection:bg-[#ff4d00] selection:text-white">
-      {/* Sidebar / Navigation */}
-      <div className="fixed inset-y-0 left-0 w-24 bg-white border-r border-slate-200 hidden lg:flex flex-col items-center py-8 z-20">
-        <div className="w-12 h-12 bg-slate-900 text-white flex items-center justify-center font-bold text-xl mb-12">
-          G
-        </div>
-        <div className="flex flex-col gap-6">
-          {MODULES.map((module) => {
-            const isActive = activeModule === module.id;
-            const Icon = module.icon;
-            return (
-              <button
-                key={module.id}
-                onClick={() => setActiveModule(module.id)}
-                className={cn(
-                  "w-12 h-12 flex items-center justify-center rounded-none transition-all group relative",
-                  isActive ? "bg-slate-900 text-white" : "text-slate-400 hover:bg-slate-100 hover:text-slate-900"
-                )}
-              >
-                <Icon className="w-5 h-5" />
-                <span className="absolute left-14 bg-slate-900 text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 font-mono">
-                  {module.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <main className="lg:pl-32 max-w-[1600px] mx-auto px-6 pt-12">
-        <header className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
-          <div>
-            <div className="flex items-center gap-3 mb-2">
-              <span className="w-2 h-2 bg-[#ff4d00]"></span>
-              <p className="text-label">GARY的数据工作台</p>
-            </div>
-            <h1 className="text-display text-5xl md:text-7xl uppercase leading-[0.9]">
-              {activeModuleMeta?.label ?? '数据工具'}
-            </h1>
-          </div>
-          
-          <div className="flex gap-8 border-t border-slate-900 pt-4 md:border-t-0 md:pt-0">
-            <div>
-              <p className="text-label mb-1">环境</p>
-              <p className="font-mono text-sm">本地浏览器</p>
-            </div>
-            <div>
-              <p className="text-label mb-1">记录</p>
-              <p className="font-mono text-sm">{history.length} 条</p>
-            </div>
+    <AppShell
+      topBar={(
+        <TopBar
+          label="GARY的数据工作台"
+          title={activeModuleMeta?.label ?? '数据工具'}
+          countsSlot={(
+            <>
+              <div>
+                <p className="text-label mb-1">环境</p>
+                <p className="font-mono text-sm">本地浏览器</p>
+              </div>
+              <div>
+                <p className="text-label mb-1">记录</p>
+                <p className="font-mono text-sm">{history.length} 条</p>
+              </div>
+            </>
+          )}
+          statusSlot={(
             <div>
               <p className="text-label mb-1">状态</p>
               <div className="flex items-center gap-2">
-                <div className={cn("w-2 h-2 rounded-full", status === 'processing' || jsonStatus === 'processing' || mergeStatus === 'processing' ? "bg-amber-400 animate-pulse" : "bg-emerald-500")}></div>
+                <div
+                  className={cn(
+                    'w-2 h-2 rounded-full',
+                    status === 'processing' || jsonStatus === 'processing' || mergeStatus === 'processing'
+                      ? 'bg-amber-400 animate-pulse'
+                      : 'bg-emerald-500'
+                  )}
+                ></div>
                 <p className="font-mono text-sm uppercase">
                   {status === 'processing' || jsonStatus === 'processing' || mergeStatus === 'processing' ? '处理中' : '就绪'}
                 </p>
               </div>
             </div>
-          </div>
-        </header>
-
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
-          {/* Main Workspace */}
-          <div className="lg:col-span-8 space-y-12">
-            
-            {/* Description Block */}
-            <div className="border-l-4 border-slate-900 pl-6 py-2">
-              <div className="text-lg md:text-xl font-medium leading-relaxed max-w-2xl text-slate-800">
-                {activeModuleMeta?.description}
-              </div>
-            </div>
-
-            {activeModule === 'split_tool' && <SplitTool />}
-            {activeModule === 'context_cache' && <ContextCacheCreator />}
-            {activeModule === 'csv_template_filler' && <CsvTemplateFiller />}
-
-            {activeModule === 'excel_to_jsonl' && (
-              <div className="space-y-8">
-                <div className="group relative w-full h-64 border-2 border-dashed border-slate-300 hover:border-slate-900 transition-colors bg-white flex flex-col items-center justify-center cursor-pointer">
-                  {!file ? (
-                    <>
-                      <input
-                        type="file"
-                        accept=".csv,.xlsx,.xls"
-                        onChange={handleFileChange}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      <Upload className="w-12 h-12 text-slate-300 mb-6 group-hover:text-slate-900 transition-colors" />
-                      <p className="font-mono text-sm font-bold text-slate-900">拖放文件至此</p>
-                      <p className="text-xs text-slate-400 mt-2 font-mono uppercase">支持 CSV, XLSX (最大 5GB)</p>
-                    </>
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 relative">
-                        <button onClick={handleRemoveFile} className="absolute top-4 right-4 p-2 hover:bg-slate-200 rounded-none transition-colors">
-                            <X className="w-5 h-5" />
-                        </button>
-                        <FileSpreadsheet className="w-16 h-16 text-slate-900 mb-4" />
-                        <p className="font-mono text-lg font-bold text-slate-900">{file.name}</p>
-                        <p className="font-mono text-sm text-slate-500 mt-1">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
-                    </div>
-                  )}
-                </div>
-
-                {file && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <button
-                      onClick={startConversion}
-                      disabled={status === 'processing' || isDownloading}
-                      className="btn-swiss-primary"
-                    >
-                      {status === 'processing' ? '处理中...' : '开始转换'}
-                    </button>
-                    <button
-                      onClick={downloadCurrent}
-                      disabled={downloadDisabled}
-                      className="btn-swiss-outline"
-                    >
-                      下载 JSONL
-                    </button>
-                  </div>
-                )}
-
-                {status === 'processing' && (
-                    <div className="w-full bg-slate-100 h-1 mt-4 overflow-hidden">
-                        <div className="h-full bg-[#ff4d00] animate-[progress_2s_ease-in-out_infinite] w-full origin-left"></div>
-                    </div>
-                )}
-
-                {status === 'error' && (
-                    <div className="p-4 border-2 border-red-500 bg-red-50 text-red-600 font-mono text-sm">
-                        <p className="font-bold">错误：</p>
-                        <p>{errorMessage}</p>
-                    </div>
-                )}
-
-                {status === 'completed' && (
-                    <div className="p-6 bg-[#f0fff4] border border-[#22c55e]">
-                        <div className="flex items-center gap-3 mb-2">
-                            <div className="w-3 h-3 bg-[#22c55e] rounded-none"></div>
-                            <p className="font-mono font-bold text-[#15803d] uppercase">成功</p>
-                        </div>
-                        <p className="font-mono text-sm text-[#15803d]">{processedCount} 行已处理。</p>
-                        {warnings.length > 0 && (
-                            <div className="mt-4 pt-4 border-t border-[#86efac]">
-                                <p className="font-mono text-xs font-bold text-[#15803d] mb-2">警告：</p>
-                                <ul className="list-disc list-inside font-mono text-xs text-[#15803d] opacity-80">
-                                    {warnings.slice(0,5).map((w, i) => <li key={i}>{w}</li>)}
-                                </ul>
-                            </div>
-                        )}
-                    </div>
-                )}
-              </div>
-            )}
-
-            {activeModule === 'json_to_excel' && (
-              <div className="space-y-8">
-                <div className="group relative w-full h-64 border-2 border-dashed border-slate-300 hover:border-slate-900 transition-colors bg-white flex flex-col items-center justify-center cursor-pointer">
-                  {!jsonFile ? (
-                    <>
-                      <input
-                        type="file"
-                        accept=".json,.jsonl"
-                        onChange={handleJsonFileChange}
-                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                      />
-                      <Upload className="w-12 h-12 text-slate-300 mb-6 group-hover:text-slate-900 transition-colors" />
-                      <p className="font-mono text-sm font-bold text-slate-900">拖放 JSON 文件</p>
-                      <p className="text-xs text-slate-400 mt-2 font-mono uppercase">支持 JSON, JSONL</p>
-                    </>
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 relative">
-                        <button onClick={handleRemoveJsonFile} className="absolute top-4 right-4 p-2 hover:bg-slate-200 rounded-none transition-colors">
-                            <X className="w-5 h-5" />
-                        </button>
-                        <FileJson className="w-16 h-16 text-slate-900 mb-4" />
-                        <p className="font-mono text-lg font-bold text-slate-900">{jsonFile.name}</p>
-                        <p className="font-mono text-sm text-slate-500 mt-1">{(jsonFile.size / (1024 * 1024)).toFixed(2)} MB</p>
-                    </div>
-                  )}
-                </div>
-
-                {jsonFile && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <button
-                      onClick={startJsonToExcel}
-                      disabled={jsonStatus === 'processing' || isDownloading}
-                      className="btn-swiss-primary"
-                    >
-                      转换为 EXCEL
-                    </button>
-                    <button
-                      onClick={async () => {
-                        if (!jsonTempFilename || !jsonFile || isDownloading) return;
-                        setIsDownloading(true);
-                        setDownloadError('');
-                        try {
-                          const opfsFile = await readOpfsFile(jsonTempFilename);
-                          const outputName = jsonFile.name.replace(/\.[^/.]+$/, "") + ".csv";
-                          await saveFileToDisk(opfsFile, outputName);
-                        } catch (err: any) {
-                          if (err?.name !== 'AbortError') setDownloadError(err?.message || 'Download failed');
-                        } finally {
-                          setIsDownloading(false);
-                        }
-                      }}
-                      disabled={jsonDownloadDisabled}
-                      className="btn-swiss-outline"
-                    >
-                      下载 CSV
-                    </button>
-                  </div>
-                )}
-                
-                {jsonStatus === 'processing' && (
-                    <div className="space-y-2">
-                        <div className="w-full bg-slate-100 h-1 overflow-hidden">
-                            <div className="h-full bg-[#ff4d00] animate-[progress_2s_ease-in-out_infinite] w-full origin-left"></div>
-                        </div>
-                        <p className="font-mono text-xs text-center text-slate-500">{jsonStage || 'Processing'} ({jsonProcessedCount} rows)</p>
-                    </div>
-                )}
-              </div>
-            )}
-
-            {activeModule === 'merge_csv' && (
-              <div className="space-y-8">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <div className="swiss-card p-6 min-h-[300px]">
-                        <h3 className="font-mono font-bold text-sm uppercase mb-6 border-b border-slate-200 pb-2">源文件</h3>
-                        <div className="space-y-4">
-                            <div className="relative border border-dashed border-slate-300 p-4 text-center hover:bg-slate-50 transition-colors cursor-pointer group">
-                                <input
-                                    type="file"
-                                    accept=".csv"
-                                    multiple
-                                    onChange={handleMergeUpload}
-                                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                                />
-                                <span className="font-mono text-xs font-bold text-slate-500 group-hover:text-slate-900">+ 添加本地 CSV</span>
-                            </div>
-                            
-                            <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2">
-                                {history.filter(h => h.outputName.endsWith('.csv')).map(item => {
-                                    const isSelected = mergeFiles.some(f => f.id === item.id);
-                                    return (
-                                        <div 
-                                            key={item.id} 
-                                            onClick={() => toggleHistorySelection(item)}
-                                            className={cn(
-                                                "p-3 border cursor-pointer transition-all font-mono text-xs flex items-center gap-3",
-                                                isSelected ? "bg-slate-900 text-white border-slate-900" : "bg-white text-slate-600 border-slate-200 hover:border-slate-400"
-                                            )}
-                                        >
-                                            <div className={cn("w-3 h-3 border", isSelected ? "border-white bg-white" : "border-slate-400")}></div>
-                                            <div className="truncate flex-1">{item.outputName}</div>
-                                        </div>
-                                    )
-                                })}
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="swiss-card p-6 flex flex-col">
-                        <div className="flex justify-between items-center border-b border-slate-200 pb-2 mb-6">
-                            <h3 className="font-mono font-bold text-sm uppercase">合并队列</h3>
-                            <span className="font-mono text-xs bg-slate-100 px-2 py-1">{mergeFiles.length} 文件</span>
-                        </div>
-                        
-                        <div className="flex-1 overflow-y-auto space-y-2 mb-6">
-                            {mergeFiles.length === 0 ? (
-                                <div className="h-full flex items-center justify-center text-slate-300 font-mono text-sm italic">
-                                    队列为空
-                                </div>
-                            ) : (
-                                mergeFiles.map(f => (
-                                    <div key={f.id} className="flex justify-between items-center p-3 bg-slate-50 border border-slate-100 font-mono text-xs">
-                                        <span className="truncate">{f.name}</span>
-                                        <button onClick={() => removeMergeFile(f.id)} className="text-slate-400 hover:text-red-500">
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-
-                        <div className="space-y-3">
-                            <button
-                                onClick={startMerge}
-                                disabled={mergeFiles.length < 2 || mergeStatus === 'processing' || isDownloading}
-                                className="btn-swiss-primary w-full"
-                            >
-                                合并文件
-                            </button>
-                            {mergeTempFilename && (
-                                <button
-                                    onClick={async () => {
-                                        if (!mergeTempFilename) return;
-                                        try {
-                                            const opfsFile = await readOpfsFile(mergeTempFilename);
-                                            const outputName = `merged_${Date.now()}.csv`;
-                                            await saveFileToDisk(opfsFile, outputName);
-                                        } catch {}
-                                    }}
-                                    className="btn-swiss-outline w-full"
-                                >
-                                    下载结果
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                 </div>
-              </div>
-            )}
-
-          </div>
-
-          {/* Right Sidebar / History */}
-          <div className="lg:col-span-4 space-y-8">
-            
-            <div className="swiss-card p-6">
-                <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-mono font-bold text-sm uppercase tracking-wider">会话日志</h3>
-                    <button onClick={clearHistory} className="text-xs font-mono underline decoration-slate-300 hover:decoration-slate-900 text-slate-500">
-                        清空
-                    </button>
-                </div>
-
-                {history.length === 0 ? (
-                    <div className="py-12 text-center border-t border-b border-slate-100">
-                        <p className="font-mono text-xs text-slate-400">无活动</p>
-                    </div>
-                ) : (
-                    <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                        {history.map(item => (
-                            <div key={item.id} className="group relative border-l-2 border-slate-200 pl-4 py-1 hover:border-slate-900 transition-colors">
-                                <p className="font-mono text-[10px] text-slate-400 mb-1">{formatTime(item.createdAt)}</p>
-                                <p className="font-medium text-sm text-slate-900 leading-tight mb-2 break-all">{item.outputName}</p>
-                                <div className="flex gap-2">
-                                    <button 
-                                        onClick={() => handlePreview(item)}
-                                        className="text-[10px] font-mono font-bold text-slate-500 hover:text-[#ff4d00] uppercase flex items-center gap-1"
-                                    >
-                                        查看 <ArrowRight className="w-3 h-3" />
-                                    </button>
-                                    <button 
-                                        onClick={() => downloadFromHistory(item)}
-                                        className="text-[10px] font-mono font-bold text-slate-500 hover:text-[#ff4d00] uppercase"
-                                    >
-                                        保存
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
-
-            <div className="p-6 bg-slate-900 text-white">
-                <h3 className="font-mono font-bold text-sm uppercase tracking-wider mb-4 text-slate-400">快速链接</h3>
-                <div className="space-y-3 font-mono text-xs">
-                    <a href="https://console.volcengine.com/tos/bucket" target="_blank" className="block hover:text-[#ff4d00] transition-colors">
-                        → 火山引擎对象存储
-                    </a>
-                    <a href="https://console.volcengine.com/ark/region:ark+cn-beijing/batchInference" target="_blank" className="block hover:text-[#ff4d00] transition-colors">
-                        → 批量推理
-                    </a>
-                </div>
-            </div>
-
-          </div>
-        </div>
-      </main>
-
-      {/* Preview Modal - Swiss Style */}
-      {previewItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur-sm p-4 md:p-12 animate-in fade-in duration-200">
-          <div className="w-full h-full max-w-6xl bg-white border-2 border-slate-900 shadow-[12px_12px_0px_0px_rgba(26,26,26,1)] flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b-2 border-slate-900 bg-slate-50">
-                <div>
-                    <p className="font-mono text-xs text-slate-500 uppercase mb-1">预览模式</p>
-                    <h2 className="font-display text-2xl font-bold text-slate-900 truncate max-w-xl">{previewItem.outputName}</h2>
-                </div>
-                <button onClick={closePreview} className="w-10 h-10 flex items-center justify-center border-2 border-slate-900 hover:bg-slate-900 hover:text-white transition-colors">
-                    <X className="w-6 h-6" />
-                </button>
-            </div>
-            
-            <div className="flex-1 overflow-hidden p-0 relative">
-                {isPreviewLoading ? (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                        <Loader2 className="w-12 h-12 animate-spin text-slate-300" />
-                    </div>
-                ) : (
-                    previewContent ? (
-                        previewContent.type === 'text' ? (
-                            <VirtualText content={previewContent.content} />
-                        ) : (
-                            <VirtualTable data={previewContent.content} />
-                        )
-                    ) : (
-                        <div className="flex items-center justify-center h-full font-mono text-slate-400">无法预览</div>
-                    )
-                )}
-            </div>
-          </div>
-        </div>
+          )}
+        />
       )}
-    </div>
+      sideNav={<SideNav modules={MODULES} activeModule={activeModule} onSelect={setActiveModule} />}
+      rightPanel={(
+        <RightPanel>
+          <div className="swiss-card p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="font-mono font-bold text-sm uppercase tracking-wider">会话日志</h3>
+              <button
+                onClick={clearHistory}
+                className="text-xs font-mono underline decoration-slate-300 hover:decoration-slate-900 text-slate-500"
+              >
+                清空
+              </button>
+            </div>
+
+            {history.length === 0 ? (
+              <div className="py-12 text-center border-t border-b border-slate-100">
+                <p className="font-mono text-xs text-slate-400">无活动</p>
+              </div>
+            ) : (
+              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+                {history.map(item => (
+                  <div
+                    key={item.id}
+                    className="group relative border-l-2 border-slate-200 pl-4 py-1 hover:border-slate-900 transition-colors"
+                  >
+                    <p className="font-mono text-[10px] text-slate-400 mb-1">{formatTime(item.createdAt)}</p>
+                    <p className="font-medium text-sm text-slate-900 leading-tight mb-2 break-all">{item.outputName}</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handlePreview(item)}
+                        className="text-[10px] font-mono font-bold text-slate-500 hover:text-[#ff4d00] uppercase flex items-center gap-1"
+                      >
+                        查看 <ArrowRight className="w-3 h-3" />
+                      </button>
+                      <button
+                        onClick={() => downloadFromHistory(item)}
+                        className="text-[10px] font-mono font-bold text-slate-500 hover:text-[#ff4d00] uppercase"
+                      >
+                        保存
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="p-6 bg-slate-900 text-white">
+            <h3 className="font-mono font-bold text-sm uppercase tracking-wider mb-4 text-slate-400">快速链接</h3>
+            <div className="space-y-3 font-mono text-xs">
+              <a
+                href="https://console.volcengine.com/tos/bucket"
+                target="_blank"
+                className="block hover:text-[#ff4d00] transition-colors"
+              >
+                → 火山引擎对象存储
+              </a>
+              <a
+                href="https://console.volcengine.com/ark/region:ark+cn-beijing/batchInference"
+                target="_blank"
+                className="block hover:text-[#ff4d00] transition-colors"
+              >
+                → 批量推理
+              </a>
+            </div>
+          </div>
+        </RightPanel>
+      )}
+    >
+      <>
+        <div className="space-y-12">
+          <div className="border-l-4 border-slate-900 pl-6 py-2">
+            <div className="text-lg md:text-xl font-medium leading-relaxed max-w-2xl text-slate-800">
+              {activeModuleMeta?.description}
+            </div>
+          </div>
+
+          {activeModule === 'split_tool' && <SplitTool />}
+          {activeModule === 'context_cache' && <ContextCacheCreator />}
+          {activeModule === 'csv_template_filler' && <CsvTemplateFiller />}
+
+          {activeModule === 'excel_to_jsonl' && (
+            <div className="space-y-8">
+              <div className="group relative w-full h-64 border-2 border-dashed border-slate-300 hover:border-slate-900 transition-colors bg-white flex flex-col items-center justify-center cursor-pointer">
+                {!file ? (
+                  <>
+                    <input
+                      type="file"
+                      accept=".csv,.xlsx,.xls"
+                      onChange={handleFileChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <Upload className="w-12 h-12 text-slate-300 mb-6 group-hover:text-slate-900 transition-colors" />
+                    <p className="font-mono text-sm font-bold text-slate-900">拖放文件至此</p>
+                    <p className="text-xs text-slate-400 mt-2 font-mono uppercase">支持 CSV, XLSX (最大 5GB)</p>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 relative">
+                    <button
+                      onClick={handleRemoveFile}
+                      className="absolute top-4 right-4 p-2 hover:bg-slate-200 rounded-none transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                    <FileSpreadsheet className="w-16 h-16 text-slate-900 mb-4" />
+                    <p className="font-mono text-lg font-bold text-slate-900">{file.name}</p>
+                    <p className="font-mono text-sm text-slate-500 mt-1">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                  </div>
+                )}
+              </div>
+
+              {file && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    onClick={startConversion}
+                    disabled={status === 'processing' || isDownloading}
+                    className="btn-swiss-primary"
+                  >
+                    {status === 'processing' ? '处理中...' : '开始转换'}
+                  </button>
+                  <button onClick={downloadCurrent} disabled={downloadDisabled} className="btn-swiss-outline">
+                    下载 JSONL
+                  </button>
+                </div>
+              )}
+
+              {status === 'processing' && (
+                <div className="w-full bg-slate-100 h-1 mt-4 overflow-hidden">
+                  <div className="h-full bg-[#ff4d00] animate-[progress_2s_ease-in-out_infinite] w-full origin-left"></div>
+                </div>
+              )}
+
+              {status === 'error' && (
+                <div className="p-4 border-2 border-red-500 bg-red-50 text-red-600 font-mono text-sm">
+                  <p className="font-bold">错误：</p>
+                  <p>{errorMessage}</p>
+                </div>
+              )}
+
+              {status === 'completed' && (
+                <div className="p-6 bg-[#f0fff4] border border-[#22c55e]">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-3 h-3 bg-[#22c55e] rounded-none"></div>
+                    <p className="font-mono font-bold text-[#15803d] uppercase">成功</p>
+                  </div>
+                  <p className="font-mono text-sm text-[#15803d]">{processedCount} 行已处理。</p>
+                  {warnings.length > 0 && (
+                    <div className="mt-4 pt-4 border-t border-[#86efac]">
+                      <p className="font-mono text-xs font-bold text-[#15803d] mb-2">警告：</p>
+                      <ul className="list-disc list-inside font-mono text-xs text-[#15803d] opacity-80">
+                        {warnings.slice(0, 5).map((w, i) => <li key={i}>{w}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeModule === 'json_to_excel' && (
+            <div className="space-y-8">
+              <div className="group relative w-full h-64 border-2 border-dashed border-slate-300 hover:border-slate-900 transition-colors bg-white flex flex-col items-center justify-center cursor-pointer">
+                {!jsonFile ? (
+                  <>
+                    <input
+                      type="file"
+                      accept=".json,.jsonl"
+                      onChange={handleJsonFileChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                    />
+                    <Upload className="w-12 h-12 text-slate-300 mb-6 group-hover:text-slate-900 transition-colors" />
+                    <p className="font-mono text-sm font-bold text-slate-900">拖放 JSON 文件</p>
+                    <p className="text-xs text-slate-400 mt-2 font-mono uppercase">支持 JSON, JSONL</p>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 relative">
+                    <button
+                      onClick={handleRemoveJsonFile}
+                      className="absolute top-4 right-4 p-2 hover:bg-slate-200 rounded-none transition-colors"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                    <FileJson className="w-16 h-16 text-slate-900 mb-4" />
+                    <p className="font-mono text-lg font-bold text-slate-900">{jsonFile.name}</p>
+                    <p className="font-mono text-sm text-slate-500 mt-1">{(jsonFile.size / (1024 * 1024)).toFixed(2)} MB</p>
+                  </div>
+                )}
+              </div>
+
+              {jsonFile && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    onClick={startJsonToExcel}
+                    disabled={jsonStatus === 'processing' || isDownloading}
+                    className="btn-swiss-primary"
+                  >
+                    转换为 EXCEL
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!jsonTempFilename || !jsonFile || isDownloading) return;
+                      setIsDownloading(true);
+                      setDownloadError('');
+                      try {
+                        const opfsFile = await readOpfsFile(jsonTempFilename);
+                        const outputName = jsonFile.name.replace(/\.[^/.]+$/, '') + '.csv';
+                        await saveFileToDisk(opfsFile, outputName);
+                      } catch (err: any) {
+                        if (err?.name !== 'AbortError') setDownloadError(err?.message || 'Download failed');
+                      } finally {
+                        setIsDownloading(false);
+                      }
+                    }}
+                    disabled={jsonDownloadDisabled}
+                    className="btn-swiss-outline"
+                  >
+                    下载 CSV
+                  </button>
+                </div>
+              )}
+
+              {jsonStatus === 'processing' && (
+                <div className="space-y-2">
+                  <div className="w-full bg-slate-100 h-1 overflow-hidden">
+                    <div className="h-full bg-[#ff4d00] animate-[progress_2s_ease-in-out_infinite] w-full origin-left"></div>
+                  </div>
+                  <p className="font-mono text-xs text-center text-slate-500">
+                    {jsonStage || 'Processing'} ({jsonProcessedCount} rows)
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {activeModule === 'merge_csv' && (
+            <div className="space-y-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="swiss-card p-6 min-h-[300px]">
+                  <h3 className="font-mono font-bold text-sm uppercase mb-6 border-b border-slate-200 pb-2">源文件</h3>
+                  <div className="space-y-4">
+                    <div className="relative border border-dashed border-slate-300 p-4 text-center hover:bg-slate-50 transition-colors cursor-pointer group">
+                      <input
+                        type="file"
+                        accept=".csv"
+                        multiple
+                        onChange={handleMergeUpload}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      />
+                      <span className="font-mono text-xs font-bold text-slate-500 group-hover:text-slate-900">+ 添加本地 CSV</span>
+                    </div>
+
+                    <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2">
+                      {history.filter(h => h.outputName.endsWith('.csv')).map(item => {
+                        const isSelected = mergeFiles.some(f => f.id === item.id);
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={() => toggleHistorySelection(item)}
+                            className={cn(
+                              'p-3 border cursor-pointer transition-all font-mono text-xs flex items-center gap-3',
+                              isSelected
+                                ? 'bg-slate-900 text-white border-slate-900'
+                                : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'
+                            )}
+                          >
+                            <div className={cn('w-3 h-3 border', isSelected ? 'border-white bg-white' : 'border-slate-400')}></div>
+                            <div className="truncate flex-1">{item.outputName}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="swiss-card p-6 flex flex-col">
+                  <div className="flex justify-between items-center border-b border-slate-200 pb-2 mb-6">
+                    <h3 className="font-mono font-bold text-sm uppercase">合并队列</h3>
+                    <span className="font-mono text-xs bg-slate-100 px-2 py-1">{mergeFiles.length} 文件</span>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto space-y-2 mb-6">
+                    {mergeFiles.length === 0 ? (
+                      <div className="h-full flex items-center justify-center text-slate-300 font-mono text-sm italic">
+                        队列为空
+                      </div>
+                    ) : (
+                      mergeFiles.map(f => (
+                        <div key={f.id} className="flex justify-between items-center p-3 bg-slate-50 border border-slate-100 font-mono text-xs">
+                          <span className="truncate">{f.name}</span>
+                          <button onClick={() => removeMergeFile(f.id)} className="text-slate-400 hover:text-red-500">
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="space-y-3">
+                    <button
+                      onClick={startMerge}
+                      disabled={mergeFiles.length < 2 || mergeStatus === 'processing' || isDownloading}
+                      className="btn-swiss-primary w-full"
+                    >
+                      合并文件
+                    </button>
+                    {mergeTempFilename && (
+                      <button
+                        onClick={async () => {
+                          if (!mergeTempFilename) return;
+                          try {
+                            const opfsFile = await readOpfsFile(mergeTempFilename);
+                            const outputName = `merged_${Date.now()}.csv`;
+                            await saveFileToDisk(opfsFile, outputName);
+                          } catch {}
+                        }}
+                        className="btn-swiss-outline w-full"
+                      >
+                        下载结果
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {previewItem && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur-sm p-4 md:p-12 animate-in fade-in duration-200">
+            <div className="w-full h-full max-w-6xl bg-white border-2 border-slate-900 shadow-[12px_12px_0px_0px_rgba(26,26,26,1)] flex flex-col">
+              <div className="flex items-center justify-between p-6 border-b-2 border-slate-900 bg-slate-50">
+                <div>
+                  <p className="font-mono text-xs text-slate-500 uppercase mb-1">预览模式</p>
+                  <h2 className="font-display text-2xl font-bold text-slate-900 truncate max-w-xl">{previewItem.outputName}</h2>
+                </div>
+                <button
+                  onClick={closePreview}
+                  className="w-10 h-10 flex items-center justify-center border-2 border-slate-900 hover:bg-slate-900 hover:text-white transition-colors"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-hidden p-0 relative">
+                {isPreviewLoading ? (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Loader2 className="w-12 h-12 animate-spin text-slate-300" />
+                  </div>
+                ) : previewContent ? (
+                  previewContent.type === 'text' ? (
+                    <VirtualText content={previewContent.content} />
+                  ) : (
+                    <VirtualTable data={previewContent.content} />
+                  )
+                ) : (
+                  <div className="flex items-center justify-center h-full font-mono text-slate-400">无法预览</div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+      </>
+    </AppShell>
   );
 }
 
