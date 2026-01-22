@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowUpRight, Download, Trash2, ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
+import { cn } from '../lib/utils';
 
 type HistoryItem = {
   id: string;
@@ -19,12 +20,16 @@ type RightPanelProps = {
 function formatTime(ts: number) {
   const d = new Date(ts);
   const pad = (n: number) => String(n).padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  if (isToday) return `今天 ${time}`;
+  return `${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${time}`;
 }
 
 function formatBytes(bytes?: number) {
   if (bytes === undefined) return '-';
-  const units = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const units = ['B', 'KB', 'MB', 'GB'];
   let value = bytes;
   let unitIndex = 0;
   while (value >= 1024 && unitIndex < units.length - 1) {
@@ -36,55 +41,61 @@ function formatBytes(bytes?: number) {
 
 export function RightPanel({ history, onPreview, onDownload, onClear }: RightPanelProps) {
   const recentItems = history.slice(0, 3);
-  const historyItems = history.slice(3);
-  const [isHistoryCollapsed, setIsHistoryCollapsed] = useState(false);
-  const historyListId = 'right-panel-history-list';
+  const olderItems = history.slice(3);
+  const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <aside className="space-y-8">
-      <div className="swiss-card p-6 space-y-6">
-        <div className="flex items-start justify-between gap-6">
-          <div>
-            <h3 className="font-mono font-bold text-sm uppercase tracking-wider">最近结果</h3>
-            <p className="text-xs text-slate-400">最近 3 条记录</p>
-          </div>
-          <button
-            onClick={onClear}
-            className="text-xs font-mono underline decoration-slate-300 hover:decoration-slate-900 text-slate-500"
-          >
-            清空
-          </button>
+    <aside className="space-y-6">
+      <div className="surface-elevated p-5">
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="text-headline">最近结果</h3>
+          {history.length > 0 && (
+            <button
+              onClick={onClear}
+              className="btn-ghost px-2 py-1 text-caption hover:text-danger"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         {history.length === 0 ? (
-          <div className="py-12 text-center border-t border-b border-slate-100">
-            <p className="font-mono text-xs text-slate-400">无活动</p>
+          <div className="py-12 text-center">
+            <div className="w-12 h-12 mx-auto mb-4 rounded-xl bg-app-subtle flex items-center justify-center">
+              <Download className="w-5 h-5 text-fg-faint" />
+            </div>
+            <p className="text-caption">暂无转换结果</p>
           </div>
         ) : (
-          <div className="grid gap-4">
+          <div className="space-y-3">
             {recentItems.map((item) => (
-              <div key={item.id} className="border border-slate-200 bg-white p-4 shadow-sm">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="font-mono text-[10px] text-slate-400 mb-1">{formatTime(item.createdAt)}</p>
-                    <p className="font-medium text-sm text-slate-900 leading-tight break-all">{item.outputName}</p>
-                  </div>
-                  <div className="text-right font-mono text-[10px] text-slate-500">
-                    <p>{item.processedCount} rows</p>
-                    <p>{formatBytes(item.sizeBytes)}</p>
+              <div 
+                key={item.id} 
+                className="group p-4 rounded-lg bg-app-subtle hover:bg-app-hover transition-colors"
+              >
+                <div className="flex items-start justify-between gap-3 mb-3">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-body font-medium truncate">{item.outputName}</p>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-caption">{formatTime(item.createdAt)}</span>
+                      <span className="text-fg-faint">•</span>
+                      <span className="text-caption">{formatBytes(item.sizeBytes)}</span>
+                    </div>
                   </div>
                 </div>
-                <div className="mt-3 flex gap-3">
+                <div className="flex gap-2">
                   <button
                     onClick={() => onPreview(item)}
-                    className="text-[10px] font-mono font-bold text-slate-500 hover:text-[#ff4d00] uppercase flex items-center gap-1"
+                    className="btn-ghost px-3 py-1.5 text-xs flex items-center gap-1.5"
                   >
-                    查看 <ArrowRight className="w-3 h-3" />
+                    <ArrowUpRight className="w-3.5 h-3.5" />
+                    预览
                   </button>
                   <button
                     onClick={() => onDownload(item)}
-                    className="text-[10px] font-mono font-bold text-slate-500 hover:text-[#ff4d00] uppercase"
+                    className="btn-primary px-3 py-1.5 text-xs flex items-center gap-1.5"
                   >
+                    <Download className="w-3.5 h-3.5" />
                     保存
                   </button>
                 </div>
@@ -93,74 +104,69 @@ export function RightPanel({ history, onPreview, onDownload, onClear }: RightPan
           </div>
         )}
 
-        <div className="border-t border-slate-100 pt-5">
-          <div className="flex items-center justify-between mb-3">
-            <p className="font-mono text-xs uppercase tracking-wider text-slate-400">历史记录</p>
-            <div className="flex items-center gap-3">
-              <span className="font-mono text-[10px] text-slate-400">{historyItems.length} 条</span>
-              {historyItems.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setIsHistoryCollapsed((prev) => !prev)}
-                  aria-expanded={!isHistoryCollapsed}
-                  aria-controls={historyListId}
-                  className="text-[10px] font-mono font-bold text-slate-500 hover:text-[#ff4d00] uppercase"
-                >
-                  {isHistoryCollapsed ? '展开历史' : '收起历史'}
-                </button>
+        {olderItems.length > 0 && (
+          <div className="mt-5 pt-5 border-t border-border-subtle">
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="flex items-center justify-between w-full text-caption hover:text-fg-secondary transition-colors"
+            >
+              <span>{olderItems.length} 条更早记录</span>
+              {isExpanded ? (
+                <ChevronUp className="w-4 h-4" />
+              ) : (
+                <ChevronDown className="w-4 h-4" />
               )}
-            </div>
-          </div>
-          {historyItems.length === 0 ? (
-            <div className="py-4 text-center font-mono text-[10px] text-slate-400">暂无更多记录</div>
-          ) : (
-            !isHistoryCollapsed && (
-              <div id={historyListId} className="space-y-3 max-h-[240px] overflow-y-auto pr-2">
-                {historyItems.map((item) => (
+            </button>
+            
+            {isExpanded && (
+              <div className="mt-3 space-y-2 max-h-60 overflow-y-auto">
+                {olderItems.map((item) => (
                   <div
                     key={item.id}
-                    className="group relative border-l-2 border-slate-200 pl-4 py-1 hover:border-slate-900 transition-colors"
+                    className="flex items-center justify-between p-3 rounded-lg hover:bg-app-subtle transition-colors cursor-pointer group"
+                    onClick={() => onPreview(item)}
                   >
-                    <p className="font-mono text-[10px] text-slate-400 mb-1">{formatTime(item.createdAt)}</p>
-                    <p className="font-medium text-sm text-slate-900 leading-tight mb-2 break-all">{item.outputName}</p>
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => onPreview(item)}
-                        className="text-[10px] font-mono font-bold text-slate-500 hover:text-[#ff4d00] uppercase flex items-center gap-1"
-                      >
-                        查看 <ArrowRight className="w-3 h-3" />
-                      </button>
-                      <button
-                        onClick={() => onDownload(item)}
-                        className="text-[10px] font-mono font-bold text-slate-500 hover:text-[#ff4d00] uppercase"
-                      >
-                        保存
-                      </button>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-body truncate">{item.outputName}</p>
+                      <p className="text-caption">{formatTime(item.createdAt)}</p>
                     </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDownload(item);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 transition-opacity btn-ghost p-2"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
                   </div>
                 ))}
               </div>
-            )
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
 
-      <div className="p-6 bg-slate-900 text-white">
-        <h3 className="font-mono font-bold text-sm uppercase tracking-wider mb-4 text-slate-400">快速链接</h3>
-        <div className="space-y-3 font-mono text-xs">
+      <div className="surface p-5">
+        <h3 className="text-label mb-4">快速链接</h3>
+        <div className="space-y-2">
           <a
             href="https://console.volcengine.com/tos/bucket"
             target="_blank"
-            className="block hover:text-[#ff4d00] transition-colors"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 p-3 rounded-lg hover:bg-app-subtle transition-colors text-body"
           >
-            → 火山引擎对象存储
+            <ExternalLink className="w-4 h-4 text-fg-muted" />
+            火山引擎对象存储
           </a>
           <a
             href="https://console.volcengine.com/ark/region:ark+cn-beijing/batchInference"
             target="_blank"
-            className="block hover:text-[#ff4d00] transition-colors"
+            rel="noopener noreferrer"
+            className="flex items-center gap-2 p-3 rounded-lg hover:bg-app-subtle transition-colors text-body"
           >
-            → 批量推理
+            <ExternalLink className="w-4 h-4 text-fg-muted" />
+            批量推理控制台
           </a>
         </div>
       </div>

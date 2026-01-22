@@ -7,21 +7,27 @@ type TopBarProps = {
   statusSlot?: React.ReactNode;
 };
 
-export function TopBar({ label, title, countsSlot, statusSlot }: TopBarProps) {
+export function TopBar({ label, title }: TopBarProps) {
   return (
-    <header className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
-      <div>
-        <div className="flex items-center gap-3 mb-2">
-          <span className="w-2 h-2 bg-[#ff4d00]"></span>
-          <p className="text-label">{label}</p>
+    <div className="flex items-center justify-between h-16">
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-lg bg-accent flex items-center justify-center">
+            <span className="text-white font-semibold text-sm">G</span>
+          </div>
+          <div>
+            <p className="text-label">{label}</p>
+            <h1 className="text-headline leading-tight">{title}</h1>
+          </div>
         </div>
-        <h1 className="text-display text-5xl md:text-7xl uppercase leading-[0.9]">{title}</h1>
       </div>
 
-      <div className="flex flex-col gap-4 border-t border-slate-900 pt-4 md:flex-row md:items-center md:gap-8 md:border-t-0 md:pt-0">
-        {countsSlot}
-        {statusSlot}
+      <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-app-subtle">
+          <span className="status-dot status-success"></span>
+          <span className="text-caption">本地运行</span>
+        </div>
       </div>
-    </header>
+    </div>
   );
 }

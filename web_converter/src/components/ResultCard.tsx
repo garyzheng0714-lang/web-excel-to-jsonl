@@ -11,20 +11,20 @@ type ResultCardProps = {
 
 export function ResultCard({ title, description, meta, children, className }: ResultCardProps) {
   return (
-    <div className={cn('swiss-card border border-slate-200 bg-white p-5', className)}>
-      <div className="flex flex-col gap-4">
+    <div className={cn('surface-elevated p-6', className)}>
+      <div className="space-y-4">
         <div>
-          <p className="font-mono text-xs uppercase tracking-wider text-slate-500">{title}</p>
-          {description ? <p className="mt-2 font-mono text-xs text-slate-500">{description}</p> : null}
-          {meta && meta.length > 0 ? (
-            <div className="mt-3 space-y-1 font-mono text-xs text-slate-500">
-              {meta.map((item) => (
-                <p key={item}>{item}</p>
+          <p className="text-label mb-1">{title}</p>
+          {description && <p className="text-caption">{description}</p>}
+          {meta && meta.length > 0 && (
+            <div className="mt-3 space-y-1">
+              {meta.map((item, i) => (
+                <p key={i} className="text-mono text-fg-muted">{item}</p>
               ))}
             </div>
-          ) : null}
+          )}
         </div>
-        {children ? <div className="space-y-3">{children}</div> : null}
+        {children && <div className="space-y-3">{children}</div>}
       </div>
     </div>
   );

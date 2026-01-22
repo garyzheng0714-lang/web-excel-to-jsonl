@@ -110,21 +110,21 @@ const VirtualTable = ({ data }: { data: any[][] }) => {
     setScrollTop(e.currentTarget.scrollTop);
   };
 
-  if (!data || data.length === 0) return <div className="p-10 text-center font-mono text-slate-400">NO DATA</div>;
+  if (!data || data.length === 0) return <div className="p-10 text-center text-mono text-fg-muted">暂无数据</div>;
 
   return (
     <div
       ref={parentRef}
-      className="relative flex-1 overflow-auto bg-white border-2 border-slate-900"
+      className="relative flex-1 overflow-auto bg-app-elevated rounded-lg border border-border-subtle"
       onScroll={onScroll}
     >
       <table className="min-w-max w-full border-collapse text-left text-sm font-mono">
-        <thead className="sticky top-0 z-10 bg-slate-100 border-b-2 border-slate-900">
+        <thead className="sticky top-0 z-10 bg-app-surface border-b border-border-strong">
           <tr>
             {header.map((h: any, i: number) => (
               <th
                 key={i}
-                className="h-11 whitespace-nowrap border-r border-slate-900 px-4 font-bold text-slate-900 last:border-r-0"
+                className="h-11 whitespace-nowrap border-r border-border-subtle px-4 font-medium text-fg-primary last:border-r-0"
               >
                 {h || `COL_${i+1}`}
               </th>
@@ -140,12 +140,12 @@ const VirtualTable = ({ data }: { data: any[][] }) => {
           {visibleRows.map((row: any[], i: number) => (
             <tr
               key={startIndex + i}
-              className="h-[44px] border-b border-slate-200 hover:bg-yellow-50"
+              className="h-[44px] border-b border-border-subtle hover:bg-app-subtle transition-colors"
             >
               {row.map((cell: any, j: number) => (
                 <td
                   key={j}
-                  className="whitespace-nowrap border-r border-slate-200 px-4 text-slate-700 last:border-r-0"
+                  className="whitespace-nowrap border-r border-border-subtle px-4 text-fg-secondary last:border-r-0"
                   title={String(cell)}
                 >
                   {String(cell)}
@@ -201,11 +201,11 @@ const VirtualText = ({ content }: { content: string }) => {
   return (
     <div
       ref={parentRef}
-      className="flex-1 overflow-auto bg-white border-2 border-slate-900 font-mono text-sm"
+      className="flex-1 overflow-auto bg-app-elevated rounded-lg border border-border-subtle font-mono text-sm"
       onScroll={onScroll}
     >
       <div
-        className="whitespace-pre px-4 text-slate-800"
+        className="whitespace-pre px-4 py-2 text-fg-secondary"
         style={{ paddingTop, paddingBottom, minHeight: '100%' }}
       >
         {visibleLines.join('\n')}
@@ -861,11 +861,11 @@ function App() {
     }
   ];
   const statusLabels: Record<StatusVariant, string> = {
-    idle: 'Idle',
-    processing: 'Processing',
-    success: 'Success',
-    warning: 'Warning',
-    error: 'Error',
+    idle: '待机',
+    processing: '处理中',
+    success: '完成',
+    warning: '有警告',
+    error: '错误',
   };
   const excelStatusVariant: StatusVariant = status === 'completed'
     ? warnings.length > 0
@@ -960,8 +960,8 @@ function App() {
 
               {file && (
                 <ResultCard
-                  title="JSONL Output"
-                  description="Run conversion, then download the JSONL file."
+                  title="JSONL 输出"
+                  description="运行转换后下载 JSONL 文件"
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <button
@@ -1006,8 +1006,8 @@ function App() {
 
               {jsonFile && (
                 <ResultCard
-                  title="CSV Output"
-                  description="Run conversion, then download the CSV file."
+                  title="CSV 输出"
+                  description="运行转换后下载 CSV 文件"
                 >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <button
@@ -1055,11 +1055,11 @@ function App() {
 
           {activeModule === 'merge_csv' && (
             <div className="space-y-8">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="swiss-card p-6 min-h-[300px]">
-                  <h3 className="font-mono font-bold text-sm uppercase mb-6 border-b border-slate-200 pb-2">源文件</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="surface-elevated p-5 min-h-[300px]">
+                  <h3 className="text-label mb-5 pb-3 border-b border-border-subtle">源文件</h3>
                   <div className="space-y-4">
-                    <div className="relative border border-dashed border-slate-300 p-4 text-center hover:bg-slate-50 transition-colors cursor-pointer group">
+                    <div className="relative border border-dashed border-border-strong rounded-lg p-4 text-center hover:bg-app-subtle transition-colors cursor-pointer group">
                       <input
                         type="file"
                         accept=".csv"
@@ -1067,10 +1067,10 @@ function App() {
                         onChange={handleMergeUpload}
                         className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                       />
-                      <span className="font-mono text-xs font-bold text-slate-500 group-hover:text-slate-900">+ 添加本地 CSV</span>
+                      <span className="text-caption font-medium group-hover:text-fg-primary">+ 添加本地 CSV</span>
                     </div>
 
-                    <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2">
+                    <div className="max-h-[300px] overflow-y-auto space-y-2">
                       {history.filter(h => h.outputName.endsWith('.csv')).map(item => {
                         const isSelected = mergeFiles.some(f => f.id === item.id);
                         return (
@@ -1078,13 +1078,18 @@ function App() {
                             key={item.id}
                             onClick={() => toggleHistorySelection(item)}
                             className={cn(
-                              'p-3 border cursor-pointer transition-all font-mono text-xs flex items-center gap-3',
+                              'p-3 rounded-lg cursor-pointer transition-all text-mono text-sm flex items-center gap-3',
                               isSelected
-                                ? 'bg-slate-900 text-white border-slate-900'
-                                : 'bg-white text-slate-600 border-slate-200 hover:border-slate-400'
+                                ? 'bg-accent text-white'
+                                : 'bg-app-subtle text-fg-secondary hover:bg-app-hover'
                             )}
                           >
-                            <div className={cn('w-3 h-3 border', isSelected ? 'border-white bg-white' : 'border-slate-400')}></div>
+                            <div className={cn(
+                              'w-4 h-4 rounded border-2 flex items-center justify-center',
+                              isSelected ? 'border-white bg-white' : 'border-fg-faint'
+                            )}>
+                              {isSelected && <span className="text-accent text-xs">✓</span>}
+                            </div>
                             <div className="truncate flex-1">{item.outputName}</div>
                           </div>
                         );
@@ -1093,22 +1098,22 @@ function App() {
                   </div>
                 </div>
 
-                <div className="swiss-card p-6 flex flex-col">
-                  <div className="flex justify-between items-center border-b border-slate-200 pb-2 mb-6">
-                    <h3 className="font-mono font-bold text-sm uppercase">合并队列</h3>
-                    <span className="font-mono text-xs bg-slate-100 px-2 py-1">{mergeFiles.length} 文件</span>
+                <div className="surface-elevated p-5 flex flex-col">
+                  <div className="flex justify-between items-center pb-3 mb-5 border-b border-border-subtle">
+                    <h3 className="text-label">合并队列</h3>
+                    <span className="chip">{mergeFiles.length} 文件</span>
                   </div>
 
-                  <div className="flex-1 overflow-y-auto space-y-2 mb-6">
+                  <div className="flex-1 overflow-y-auto space-y-2 mb-5">
                     {mergeFiles.length === 0 ? (
-                      <div className="h-full flex items-center justify-center text-slate-300 font-mono text-sm italic">
+                      <div className="h-full flex items-center justify-center text-fg-faint text-body">
                         队列为空
                       </div>
                     ) : (
                       mergeFiles.map(f => (
-                        <div key={f.id} className="flex justify-between items-center p-3 bg-slate-50 border border-slate-100 font-mono text-xs">
-                          <span className="truncate">{f.name}</span>
-                          <button onClick={() => removeMergeFile(f.id)} className="text-slate-400 hover:text-red-500">
+                        <div key={f.id} className="flex justify-between items-center p-3 rounded-lg bg-app-subtle text-mono text-sm">
+                          <span className="truncate text-fg-secondary">{f.name}</span>
+                          <button onClick={() => removeMergeFile(f.id)} className="text-fg-faint hover:text-danger transition-colors">
                             <X className="w-4 h-4" />
                           </button>
                         </div>
@@ -1119,13 +1124,13 @@ function App() {
               </div>
 
               <ResultCard
-                title="Merge Output"
-                description="Merge files, then download the combined CSV."
+                title="合并输出"
+                description="合并文件后下载结果 CSV"
               >
                 <button
                   onClick={startMerge}
                   disabled={mergeFiles.length < 2 || mergeStatus === 'processing' || isDownloading}
-                  className="btn-swiss-primary w-full"
+                  className="btn-primary w-full"
                 >
                   合并文件
                 </button>
@@ -1140,7 +1145,7 @@ function App() {
                       } catch {}
                     }}
                     disabled={mergeDownloadDisabled}
-                    className="btn-swiss-outline w-full"
+                    className="btn-secondary w-full"
                   >
                     下载结果
                   </button>
@@ -1161,25 +1166,25 @@ function App() {
         </div>
 
         {previewItem && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/90 backdrop-blur-sm p-4 md:p-12 animate-in fade-in duration-200">
-            <div className="modal w-full h-full max-w-6xl flex flex-col">
-              <div className="flex items-center justify-between p-6 border-b-2 border-slate-900 bg-slate-50">
+          <div className="modal-overlay flex items-center justify-center p-6 md:p-12">
+            <div className="modal w-full h-full max-w-6xl flex flex-col animate-slide-up">
+              <div className="flex items-center justify-between p-5 border-b border-border-subtle">
                 <div>
-                  <p className="font-mono text-xs text-slate-500 uppercase mb-1">预览模式</p>
-                  <h2 className="font-display text-2xl font-bold text-slate-900 truncate max-w-xl">{previewItem.outputName}</h2>
+                  <p className="text-label mb-1">预览</p>
+                  <h2 className="text-title truncate max-w-xl">{previewItem.outputName}</h2>
                 </div>
                 <button
                   onClick={closePreview}
-                  className="btn-ghost w-10 h-10 p-0"
+                  className="btn-ghost w-10 h-10 p-0 rounded-lg"
                 >
-                  <X className="w-6 h-6" />
+                  <X className="w-5 h-5" />
                 </button>
               </div>
 
-              <div className="flex-1 overflow-hidden p-0 relative">
+              <div className="flex-1 overflow-hidden p-4 relative">
                 {isPreviewLoading ? (
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <Loader2 className="w-12 h-12 animate-spin text-slate-300" />
+                    <Loader2 className="w-10 h-10 animate-spin text-fg-faint" />
                   </div>
                 ) : previewContent ? (
                   previewContent.type === 'text' ? (
@@ -1188,7 +1193,7 @@ function App() {
                     <VirtualTable data={previewContent.content} />
                   )
                 ) : (
-                  <div className="flex items-center justify-center h-full font-mono text-slate-400">无法预览</div>
+                  <div className="flex items-center justify-center h-full text-body text-fg-muted">无法预览</div>
                 )}
               </div>
             </div>

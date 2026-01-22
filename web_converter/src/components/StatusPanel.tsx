@@ -15,45 +15,48 @@ type StatusPanelProps = {
   className?: string;
 };
 
-const statusStyles: Record<StatusVariant, { container: string; iconWrap: string; icon: string; progress: string }> = {
+const statusConfig: Record<StatusVariant, { 
+  bg: string; 
+  iconBg: string; 
+  text: string;
+  iconColor: string;
+  Icon: React.ComponentType<{ className?: string }>;
+}> = {
   idle: {
-    container: 'border-slate-200 bg-slate-50 text-slate-600',
-    iconWrap: 'border-slate-200 bg-white',
-    icon: 'text-slate-500',
-    progress: 'bg-slate-400',
+    bg: 'bg-app-subtle',
+    iconBg: 'bg-app-hover',
+    text: 'text-fg-muted',
+    iconColor: 'text-fg-muted',
+    Icon: Minus,
   },
   processing: {
-    container: 'border-amber-200 bg-amber-50 text-amber-700',
-    iconWrap: 'border-amber-200 bg-amber-100',
-    icon: 'text-amber-700',
-    progress: 'bg-amber-500',
+    bg: 'bg-warning-soft',
+    iconBg: 'bg-warning',
+    text: 'text-warning',
+    iconColor: 'text-white',
+    Icon: Loader2,
   },
   success: {
-    container: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    iconWrap: 'border-emerald-200 bg-emerald-100',
-    icon: 'text-emerald-700',
-    progress: 'bg-emerald-500',
+    bg: 'bg-success-soft',
+    iconBg: 'bg-success',
+    text: 'text-success',
+    iconColor: 'text-white',
+    Icon: Check,
   },
   warning: {
-    container: 'border-yellow-200 bg-yellow-50 text-yellow-800',
-    iconWrap: 'border-yellow-200 bg-yellow-100',
-    icon: 'text-yellow-800',
-    progress: 'bg-yellow-500',
+    bg: 'bg-warning-soft',
+    iconBg: 'bg-warning',
+    text: 'text-warning',
+    iconColor: 'text-white',
+    Icon: AlertTriangle,
   },
   error: {
-    container: 'border-red-200 bg-red-50 text-red-700',
-    iconWrap: 'border-red-200 bg-red-100',
-    icon: 'text-red-700',
-    progress: 'bg-red-500',
+    bg: 'bg-danger-soft',
+    iconBg: 'bg-danger',
+    text: 'text-danger',
+    iconColor: 'text-white',
+    Icon: X,
   },
-};
-
-const statusIcons: Record<StatusVariant, React.ComponentType<{ className?: string }>> = {
-  idle: Minus,
-  processing: Loader2,
-  success: Check,
-  warning: AlertTriangle,
-  error: X,
 };
 
 export function StatusPanel({
@@ -62,12 +65,12 @@ export function StatusPanel({
   message,
   details,
   warnings,
-  warningsTitle = 'Warnings',
+  warningsTitle = '警告',
   showProgress = false,
   className,
 }: StatusPanelProps) {
-  const Icon = statusIcons[status];
-  const styles = statusStyles[status];
+  const config = statusConfig[status];
+  const { Icon, bg, iconBg, text, iconColor } = config;
   const ariaLive = status === 'idle' ? 'off' : status === 'error' ? 'assertive' : 'polite';
   const role = status === 'error' ? 'alert' : 'status';
 
@@ -76,43 +79,51 @@ export function StatusPanel({
       role={role}
       aria-live={ariaLive}
       aria-busy={status === 'processing'}
-      className={cn('border-2 p-5 space-y-4', styles.container, className)}
+      className={cn('rounded-xl p-5', bg, className)}
     >
       <div className="flex gap-4">
-        <div className={cn('flex h-11 w-11 items-center justify-center border-2', styles.iconWrap)}>
-          <Icon className={cn('h-5 w-5', styles.icon, status === 'processing' && 'animate-spin')} />
+        <div className={cn(
+          'flex h-10 w-10 items-center justify-center rounded-lg flex-shrink-0',
+          iconBg
+        )}>
+          <Icon className={cn(
+            'h-5 w-5',
+            iconColor,
+            status === 'processing' && 'animate-spin'
+          )} />
         </div>
-        <div className="flex-1 space-y-2">
-          <p className="font-mono text-xs uppercase tracking-wider">{title}</p>
-          {message ? <p className="font-mono text-sm">{message}</p> : null}
-          {details && details.length > 0 ? (
-            <div className="space-y-1 font-mono text-xs text-current opacity-80">
-              {details.map((detail) => (
-                <p key={detail}>{detail}</p>
+        <div className="flex-1 min-w-0 space-y-1">
+          <p className={cn('text-label', text)}>{title}</p>
+          {message && <p className="text-body">{message}</p>}
+          {details && details.length > 0 && (
+            <div className="space-y-0.5 text-caption">
+              {details.map((detail, i) => (
+                <p key={i}>{detail}</p>
               ))}
             </div>
-          ) : null}
+          )}
         </div>
       </div>
 
-      {showProgress ? (
-        <div className="h-1 w-full overflow-hidden border border-white/40 bg-white/60">
-          <div
-            className={cn('h-full w-full animate-[progress_2s_ease-in-out_infinite] origin-left', styles.progress)}
-          ></div>
+      {showProgress && (
+        <div className="mt-4 progress-bar">
+          <div className="progress-bar-fill"></div>
         </div>
-      ) : null}
+      )}
 
-      {warnings && warnings.length > 0 ? (
-        <div className="border-t border-current/10 pt-3">
-          <p className="font-mono text-xs font-bold">{warningsTitle}</p>
-          <ul className="mt-2 list-disc list-inside font-mono text-xs opacity-80">
-            {warnings.slice(0, 5).map((warning, index) => (
-              <li key={`${index}-${warning}`}>{warning}</li>
+      {warnings && warnings.length > 0 && (
+        <div className="mt-4 pt-4 border-t border-warning/20">
+          <p className="text-label text-warning mb-2">{warningsTitle}</p>
+          <ul className="space-y-1">
+            {warnings.slice(0, 5).map((warning, i) => (
+              <li key={i} className="text-caption text-warning/80 flex items-start gap-2">
+                <span className="text-warning mt-1">•</span>
+                <span>{warning}</span>
+              </li>
             ))}
           </ul>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

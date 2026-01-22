@@ -1,5 +1,5 @@
-import React from 'react';
-import { Upload, X } from 'lucide-react';
+import React, { useState, useCallback } from 'react';
+import { Upload, X, FileCheck } from 'lucide-react';
 import { cn } from '../lib/utils';
 
 type UploadCardProps = {
@@ -15,7 +15,11 @@ type UploadCardProps = {
 };
 
 function formatFileSize(file: File) {
-  return `${(file.size / (1024 * 1024)).toFixed(2)} MB`;
+  const bytes = file.size;
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(2)} GB`;
 }
 
 export function UploadCard({
@@ -25,21 +29,38 @@ export function UploadCard({
   onRemove,
   idleTitle,
   idleSubtitle,
-  fileIcon,
   errorMessage,
   inputLabel,
 }: UploadCardProps) {
+  const [isDragOver, setIsDragOver] = useState(false);
   const hasError = Boolean(errorMessage);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
 
   return (
     <div className="space-y-4">
       <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
         className={cn(
-          'upload-card group relative w-full h-64 border-2 border-dashed transition-colors flex flex-col items-center justify-center',
-          file ? 'cursor-default' : 'cursor-pointer',
-          hasError
-            ? 'upload-card--error border-red-300 bg-red-50/40'
-            : 'border-slate-300 hover:border-slate-900 bg-white'
+          'upload-zone group',
+          file && 'has-file',
+          isDragOver && 'drag-over',
+          hasError && 'border-danger'
         )}
       >
         {!file ? (
@@ -51,41 +72,54 @@ export function UploadCard({
               aria-label={inputLabel}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
-            <Upload
-              className={cn(
-                'w-12 h-12 mb-6 transition-colors',
-                hasError ? 'text-red-300 group-hover:text-red-500' : 'text-slate-300 group-hover:text-slate-900'
-              )}
-            />
-            <p className="font-mono text-sm font-bold text-slate-900">{idleTitle}</p>
-            {idleSubtitle ? (
-              <p className="text-xs text-slate-400 mt-2 font-mono uppercase">{idleSubtitle}</p>
-            ) : null}
+            <div className={cn(
+              'w-16 h-16 rounded-2xl flex items-center justify-center mb-6 transition-all',
+              'bg-app-subtle group-hover:bg-accent group-hover:scale-110'
+            )}>
+              <Upload className={cn(
+                'w-7 h-7 transition-colors',
+                hasError ? 'text-danger' : 'text-fg-muted group-hover:text-white'
+              )} />
+            </div>
+            <p className="text-headline text-center">{idleTitle}</p>
+            {idleSubtitle && (
+              <p className="text-caption mt-2 text-center">{idleSubtitle}</p>
+            )}
           </>
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-slate-50 relative">
+          <div className="w-full flex items-center gap-5 p-2">
+            <div className="w-14 h-14 rounded-xl bg-success-soft flex items-center justify-center flex-shrink-0">
+              <FileCheck className="w-6 h-6 text-success" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-headline truncate">{file.name}</p>
+              <p className="text-caption mt-1">{formatFileSize(file)}</p>
+            </div>
             <button
               onClick={onRemove}
-              aria-label="Remove file"
-              className="absolute top-4 right-4 p-2 hover:bg-slate-200 rounded-none transition-colors"
+              aria-label="移除文件"
+              className="btn-ghost w-10 h-10 p-0 rounded-lg flex-shrink-0"
             >
               <X className="w-5 h-5" />
             </button>
-            {fileIcon ? <div className="mb-4">{fileIcon}</div> : null}
-            <p className="font-mono text-lg font-bold text-slate-900">{file.name}</p>
-            <p className="font-mono text-sm text-slate-500 mt-1">{formatFileSize(file)}</p>
           </div>
         )}
       </div>
-      {hasError ? (
+      
+      {hasError && (
         <div
           role="alert"
-          className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700"
+          className="flex items-start gap-3 p-4 rounded-xl bg-danger-soft border border-danger/20"
         >
-          <p className="text-label text-red-700">错误</p>
-          <p className="font-mono text-sm">{errorMessage}</p>
+          <div className="w-5 h-5 rounded-full bg-danger flex items-center justify-center flex-shrink-0 mt-0.5">
+            <X className="w-3 h-3 text-white" />
+          </div>
+          <div>
+            <p className="text-label text-danger">错误</p>
+            <p className="text-body text-danger/80 mt-1">{errorMessage}</p>
+          </div>
         </div>
-      ) : null}
+      )}
     </div>
   );
 }

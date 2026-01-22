@@ -1,5 +1,4 @@
 import React from 'react';
-
 import { cn } from '../lib/utils';
 
 type SideNavModule = {
@@ -16,32 +15,28 @@ type SideNavProps = {
 
 export function SideNav({ modules, activeModule, onSelect }: SideNavProps) {
   return (
-    <nav className="flex items-center gap-6 overflow-x-auto border-b border-slate-200 pb-6 lg:sticky lg:top-8 lg:flex-col lg:items-center lg:overflow-visible lg:border-b-0 lg:pb-0">
-      <div className="w-12 h-12 bg-slate-900 text-white flex items-center justify-center font-bold text-xl">
-        G
-      </div>
-      <div className="flex items-center gap-4 lg:flex-col lg:gap-6">
-        {modules.map((module) => {
-          const isActive = activeModule === module.id;
-          const Icon = module.icon;
-          return (
-            <button
-              key={module.id}
-              onClick={() => onSelect(module.id)}
-              aria-label={module.label}
-              className={cn(
-                'w-12 h-12 flex items-center justify-center rounded-none transition-all group relative',
-                isActive ? 'bg-slate-900 text-white' : 'text-slate-400 hover:bg-slate-100 hover:text-slate-900'
-              )}
-            >
-              <Icon className="w-5 h-5" />
-              <span className="absolute left-14 bg-slate-900 text-white text-xs px-2 py-1 opacity-0 group-hover:opacity-100 group-focus-visible:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-50 font-mono">
-                {module.label}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+    <nav className="flex gap-2 overflow-x-auto pb-4 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
+      {modules.map((module) => {
+        const isActive = activeModule === module.id;
+        const Icon = module.icon;
+        return (
+          <button
+            key={module.id}
+            onClick={() => onSelect(module.id)}
+            aria-label={module.label}
+            aria-current={isActive ? 'page' : undefined}
+            className={cn(
+              'group flex items-center gap-3 px-4 py-3 rounded-xl transition-all text-left min-w-max',
+              isActive 
+                ? 'bg-accent text-white shadow-glow' 
+                : 'text-fg-secondary hover:bg-app-subtle hover:text-fg-primary'
+            )}
+          >
+            <Icon className="w-5 h-5 flex-shrink-0" />
+            <span className="text-sm font-medium">{module.label}</span>
+          </button>
+        );
+      })}
     </nav>
   );
 }
