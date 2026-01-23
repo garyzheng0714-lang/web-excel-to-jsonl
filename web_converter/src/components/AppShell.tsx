@@ -19,7 +19,7 @@ export function AppShell({ topBar, sideNav, rightPanel, children }: AppShellProp
 
         <div className="flex-1 px-6 lg:px-10 py-10">
           <div className="mx-auto max-w-[1600px]">
-            <div className="grid grid-cols-1 gap-10 lg:grid-cols-[200px_1fr_340px] lg:gap-12">
+            <div className="grid grid-cols-1 gap-10 lg:grid-cols-[240px_1fr_360px] lg:gap-12">
               <aside className="order-2 lg:order-none lg:sticky lg:top-28 lg:self-start">
                 {sideNav}
               </aside>

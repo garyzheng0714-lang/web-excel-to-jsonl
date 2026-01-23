@@ -842,24 +842,25 @@ function App() {
   const ActiveModuleIcon = activeModuleMeta?.icon;
   const isProcessing = status === 'processing' || jsonStatus === 'processing' || mergeStatus === 'processing';
   const moduleStatusText = isProcessing ? '处理中' : '就绪';
-  const moduleMetaChips = [
-    { label: '环境', value: '本地浏览器' },
-    { label: '记录', value: `${history.length} 条` },
-    {
-      label: '状态',
-      value: (
-        <div className="flex items-center gap-2">
-          <span
-            className={cn(
-              'w-2 h-2 rounded-full',
-              isProcessing ? 'bg-amber-400 animate-pulse' : 'bg-emerald-500'
-            )}
-          ></span>
-          <span className="uppercase">{moduleStatusText}</span>
-        </div>
-      )
-    }
-  ];
+  
+  const statusSlot = (
+    <div className="flex items-center gap-2">
+      <span
+        className={cn(
+          'w-2 h-2 rounded-full',
+          isProcessing ? 'bg-amber-400 animate-pulse' : 'bg-emerald-500'
+        )}
+      ></span>
+      <span className="text-caption font-medium">{moduleStatusText}</span>
+    </div>
+  );
+
+  const countsSlot = (
+    <span className="text-caption text-fg-secondary">
+      {history.length} 条记录
+    </span>
+  );
+
   const statusLabels: Record<StatusVariant, string> = {
     idle: '待机',
     processing: '处理中',
@@ -920,6 +921,8 @@ function App() {
         <TopBar
           label="GARY的数据工作台"
           title={activeModuleMeta?.label ?? '数据工具'}
+          statusSlot={statusSlot}
+          countsSlot={countsSlot}
         />
       )}
       sideNav={<SideNav modules={MODULES} activeModule={activeModule} onSelect={setActiveModule} />}
@@ -938,7 +941,6 @@ function App() {
             summary={activeModuleMeta?.summary ?? 'MODULE'}
             title={activeModuleMeta?.label ?? '数据工具'}
             description={activeModuleMeta?.description ?? null}
-            metaChips={moduleMetaChips}
           />
 
           {activeModule === 'split_tool' && <SplitTool />}
