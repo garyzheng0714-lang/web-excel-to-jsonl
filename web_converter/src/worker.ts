@@ -96,37 +96,54 @@ self.onmessage = async (e: MessageEvent<WorkerMessage>) => {
         }
       });
     } else {
+      // 逐行读取 Excel，避免 sheet_to_json 一次性生成全部对象导致大文件 OOM
       const arrayBuffer = await file.arrayBuffer();
       const workbook = XLSX.read(arrayBuffer, { type: 'array' });
       const firstSheetName = workbook.SheetNames[0];
       const worksheet = workbook.Sheets[firstSheetName];
-      
-      const rows = XLSX.utils.sheet_to_json(worksheet);
-      
-      if (rows.length > 0) {
-        const firstRow = rows[0] as any;
-        if (!('custom_id' in firstRow) || !('content' in firstRow)) {
-           throw new Error(`文件必须包含 'custom_id' 和 'content' 列。当前列: ${Object.keys(firstRow).join(', ')}`);
-        }
+
+      const ref = worksheet['!ref'];
+      if (!ref) throw new Error('工作表为空');
+      const range = XLSX.utils.decode_range(ref);
+
+      // 读取表头
+      const headers: string[] = [];
+      for (let c = range.s.c; c <= range.e.c; c++) {
+        const cell = worksheet[XLSX.utils.encode_cell({ r: range.s.r, c })];
+        headers.push(cell ? String(cell.v).trim() : '');
       }
 
-      for (const row of rows) {
+      if (!headers.includes('custom_id') || !headers.includes('content')) {
+        throw new Error(`文件必须包含 'custom_id' 和 'content' 列。当前列: ${headers.join(', ')}`);
+      }
+
+      // 逐行处理，每行只创建一个临时对象
+      for (let r = range.s.r + 1; r <= range.e.r; r++) {
         totalLines++;
-        const result = processRow(row as any, customIdSet, totalLines);
-        
+        const row: Record<string, any> = {};
+        for (let c = range.s.c; c <= range.e.c; c++) {
+          const cell = worksheet[XLSX.utils.encode_cell({ r, c })];
+          if (headers[c - range.s.c]) {
+            row[headers[c - range.s.c]] = cell ? cell.v : undefined;
+          }
+        }
+
+        const result = processRow(row, customIdSet, totalLines);
+
         if (result.success && result.data) {
           writeBuffer(result.data);
           processedCount++;
           reportProgress(processedCount);
         } else if (!result.success && result.error) {
-           handleRowError(result.error);
+          handleRowError(result.error);
         }
-        
-        if (processedCount % 5000 === 0) {
-             await new Promise(resolve => setTimeout(resolve, 0));
+
+        // 每 1000 行让出控制权，避免长时间阻塞
+        if (totalLines % 1000 === 0) {
+          await new Promise(resolve => setTimeout(resolve, 0));
         }
       }
-      
+
       reportProgress(processedCount, true);
       accessHandle?.flush?.();
       accessHandle?.close();
