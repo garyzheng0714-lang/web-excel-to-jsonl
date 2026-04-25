@@ -1,58 +1,39 @@
-# Excel/CSV <-> JSONL 数据集转换工具
+# web-excel-to-jsonl
 
-一个纯前端运行的数据集格式转换工作台，用于在浏览器中处理 Excel、CSV、JSON、JSONL 等文件，并生成适合 AI 批量推理、人工审查或二次处理的数据集。
+![类型](https://img.shields.io/badge/%E7%B1%BB%E5%9E%8B-%E8%A1%A8%E6%A0%BC%E5%B7%A5%E5%85%B7-0ea5e9)
+![技术栈](https://img.shields.io/badge/%E6%8A%80%E6%9C%AF%E6%A0%88-React%20%2B%20Vite%20%2B%20SheetJS-16a34a)
+![状态](https://img.shields.io/badge/%E7%8A%B6%E6%80%81-%E9%9D%99%E6%80%81%E5%89%8D%E7%AB%AF-7c3aed)
+![README](https://img.shields.io/badge/README-%E4%B8%AD%E6%96%87-111827)
 
-## Overview
+一个浏览器端数据集转换工作台，用于在 Excel、CSV、JSON、JSONL 等格式之间转换、拆分、合并和预览。
 
-主应用位于 `web_converter/`，使用 Vite + React + TypeScript 构建。项目根目录提供了一个构建包装脚本，用于安装子项目依赖、构建前端，并把产物复制到根目录 `dist/`，便于 Vercel 等静态托管平台部署。
+## 仓库定位
 
-除“上下文缓存”模块需要调用远程 API 外，文件转换、预览、拆分和合并逻辑都在浏览器本地完成。
+- 分类：表格工具 / 数据转换 / AI 数据集准备。
+- 服务对象：需要把表格数据整理成 JSONL、把模型批处理结果还原为 CSV，或进行 CSV 合并/拆分的运营、数据和 AI 工作流。
+- 与其他表格仓库的区别：本仓库是通用浏览器端文件转换工具，不依赖飞书多维表格，也不是海报、报名或短链业务系统。
 
-## Features
+## 功能概览
 
-- Excel/CSV 转 Batch API 风格 JSONL
-- JSON/JSONL 转 CSV，支持自动展平常见批量推理结果结构
-- CSV 模板填充，使用 `{{列名}}` 占位符批量生成文本
-- 多 CSV 合并，自动对齐表头
-- 大 CSV 拆分为多个 Excel 文件并打包 ZIP
-- Volcengine/Doubao 上下文缓存创建工具
-- 大文件流式处理、虚拟滚动预览、OPFS 本地缓存
-- 结果历史、下载、删除和预览面板
+- Excel/CSV 转 Batch API 风格 JSONL。
+- JSON/JSONL 转 CSV，支持常见模型批处理结果结构的字段提取。
+- CSV 模板填充，使用 `{{列名}}` 占位符批量生成文本。
+- 多个 CSV 合并，并自动对齐表头。
+- 大 CSV 拆分为多个 Excel 文件并打包 ZIP。
+- Volcengine/Doubao 上下文缓存创建辅助工具。
+- 支持大文件处理、虚拟滚动预览、OPFS 本地缓存和历史结果管理。
+- 根目录提供构建包装脚本，便于静态托管平台部署。
 
-## Tech Stack
+## 技术栈
 
-- React 18, TypeScript, Vite
-- Tailwind CSS
-- PapaParse for CSV parsing
-- SheetJS `xlsx` for Excel parsing and generation
-- JSZip for ZIP output
-- StreamSaver.js and File System Access API for large downloads
-- Web Workers and OPFS for large file processing
-- Lucide React icons
+- 前端：React 18、TypeScript、Vite、Tailwind CSS。
+- 文件处理：SheetJS `xlsx`、PapaParse、JSZip、StreamSaver.js。
+- 大文件能力：Web Workers、OPFS、File System Access API。
+- UI 辅助：Lucide React、clsx、tailwind-merge。
 
-## Project Structure
+## 快速开始
 
-```text
-.
-├── package.json              # Root build wrapper for deployment
-├── vercel.json               # Root deployment config
-├── README.md
-├── SKILL.md                  # Frontend design skill metadata in this repo
-└── web_converter/
-    ├── package.json          # Main app scripts and dependencies
-    ├── src/
-    │   ├── App.tsx           # Main workspace and module routing
-    │   ├── ContextCacheCreator.tsx
-    │   ├── CsvTemplateFiller.tsx
-    │   ├── SplitTool.tsx
-    │   ├── *Worker.ts        # Conversion workers
-    │   └── components/       # App shell, panels and upload/result UI
-    └── vite.config.ts
-```
-
-## Getting Started
-
-Install and run the main app:
+主应用位于 `web_converter/`。
 
 ```bash
 cd web_converter
@@ -60,62 +41,86 @@ npm install
 npm run dev
 ```
 
-Build the main app:
+构建主应用：
 
 ```bash
 cd web_converter
 npm run build
 ```
 
-Build from the repository root for deployment:
+从仓库根目录执行部署构建：
 
 ```bash
+npm install
 npm run build
 ```
 
-The root build command installs dependencies in `web_converter/`, builds the Vite app, then copies `web_converter/dist/*` into the root `dist/` directory.
+根目录构建会安装 `web_converter/` 依赖、构建 Vite 应用，并把 `web_converter/dist/*` 复制到根目录 `dist/`。
 
-## Scripts
+## 项目结构
 
-Root:
+```text
+.
+├── package.json              # 根目录部署构建包装脚本
+├── vercel.json               # 静态托管配置
+├── web_converter/            # 主前端应用
+│   ├── src/
+│   │   ├── App.tsx           # 主工作台与模块切换
+│   │   ├── ContextCacheCreator.tsx
+│   │   ├── CsvTemplateFiller.tsx
+│   │   ├── SplitTool.tsx
+│   │   ├── *Worker.ts        # 转换、拆分、合并 worker
+│   │   └── components/       # 应用框架、上传、结果和侧栏组件
+│   ├── package.json
+│   └── vite.config.ts
+├── 上下文缓存.md
+├── 上下文缓存模型列表.md
+└── README.md
+```
 
-| Command | Description |
+## 常用脚本
+
+根目录：
+
+| 命令 | 说明 |
 | --- | --- |
-| `npm run install-modules` | Install dependencies inside `web_converter/` |
-| `npm run build` | Build the frontend and copy output to root `dist/` |
+| `npm run install-modules` | 安装 `web_converter/` 内的依赖 |
+| `npm run build` | 构建前端并复制产物到根目录 `dist/` |
 
-`web_converter/`:
+`web_converter/`：
 
-| Command | Description |
+| 命令 | 说明 |
 | --- | --- |
-| `npm run dev` | Start the Vite dev server |
-| `npm run build` | Build the production bundle |
-| `npm run preview` | Preview the production build |
+| `npm run dev` | 启动 Vite 开发服务 |
+| `npm run build` | 构建生产产物 |
+| `npm run preview` | 预览生产构建 |
 
-## Usage Notes
+## 使用说明
 
-### Excel/CSV to JSONL
+### Excel/CSV 转 JSONL
 
-Use a `.xlsx`, `.xls`, or `.csv` file with at least:
+上传 `.xlsx`、`.xls` 或 `.csv` 文件。常见输入列包括：
 
 - `custom_id`
 - `content`
+- 可选 `image_url`
 
-Optional:
+每条有效记录会生成一行 JSONL，请求体中包含 messages、temperature、top_p、max_tokens 等字段。
 
-- `image_url` for multimodal inputs
+### JSON/JSONL 转 CSV
 
-Each valid row becomes a JSONL record with request body fields such as messages, temperature, top_p and max_tokens.
+支持 JSON 数组、对象或 JSONL 行。工具会尝试提取 prompt、response、DeepSeek `reasoning_content` 等常见批处理结果字段。
 
-### JSON/JSONL to CSV
+### CSV 模板填充
 
-The converter can read JSON arrays, objects, or JSONL lines. It attempts to extract common fields from model batch results, including prompt content, response output and DeepSeek `reasoning_content` when present.
+使用 `{{列名}}` 写模板，根据 CSV 每一行批量生成文本，适合提示词、邮件、标签和描述批处理。
 
-### Context Cache
+### 上下文缓存
 
-The context cache module sends the entered content and API key to the configured Volcengine endpoint through the app's `/ark` proxy route. Use this module only with data that is allowed to leave the browser.
+上下文缓存模块会通过应用的 `/ark` 代理路由向 Volcengine endpoint 发送内容与 API key。仅在数据允许离开本地浏览器时使用该模块。
 
-## Notes
+## 注意事项
 
-- Generated files and `node_modules/` are present in the repository history, but active development should happen from `web_converter/src/`.
-- The repository does not currently expose a checked-in license file.
+- 除上下文缓存模块外，主要文件转换、预览、拆分和合并逻辑在浏览器本地完成。
+- 仓库历史中包含构建产物和依赖目录，日常开发应以 `web_converter/src/` 为准。
+- 当前仓库没有单独的 license 文件。
