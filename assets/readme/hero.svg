@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="380" viewBox="0 0 1200 380" role="img" aria-labelledby="heroTitle heroDesc">
+  <title id="heroTitle">Excel / CSV ↔ JSONL 数据工具</title>
+  <desc id="heroDesc">纯前端工具：把带 custom_id、content 列的表格逐行转成批量推理用的 JSONL。图中上方是源表格，下方是生成的一条 JSONL 记录结构。</desc>
+
+  <defs>
+    <style>
+      .sans { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", sans-serif; }
+      .mono { font-family: ui-monospace, SFMono-Regular, Menlo, "Cascadia Mono", monospace; }
+      .k { fill: #79C0FF; }
+      .s { fill: #A5D6FF; }
+      .n { fill: #FFA657; }
+      .p { fill: #8B949E; }
+    </style>
+  </defs>
+
+  <rect width="1200" height="380" rx="26" fill="#0D1117"/>
+
+  <!-- 左：标题区 -->
+  <g id="title-block" class="sans">
+    <rect x="64" y="82" width="6" height="22" rx="3" fill="#FFA657"/>
+    <text x="82" y="100" font-size="22" font-weight="600" fill="#FFA657" letter-spacing="1">批量推理数据准备 · 纯前端</text>
+
+    <text x="64" y="172" font-size="46" font-weight="700" fill="#FFFFFF" letter-spacing="0.5">Excel / CSV ↔ JSONL</text>
+
+    <text x="64" y="222" font-size="24" fill="#8B98A9">把表格准备成批量推理要的 JSONL，</text>
+    <text x="64" y="258" font-size="24" fill="#8B98A9">转换、模板填充、合并、拆分都在浏览器里。</text>
+
+    <text x="64" y="322" font-size="18" class="mono" fill="#57606A">React 18 · Vite · Web Worker · OPFS</text>
+  </g>
+
+  <!-- 右上：源表格 -->
+  <g id="source-table" class="sans">
+    <text x="600" y="58" font-size="17" fill="#6E7A89">源表格 · 必需列 custom_id / content</text>
+    <rect x="600" y="70" width="536" height="106" rx="8" fill="#161B22" stroke="#262E38" stroke-width="1"/>
+
+    <text x="616" y="100" font-size="17" class="mono" fill="#6E7A89">custom_id</text>
+    <text x="742" y="100" font-size="17" class="mono" fill="#6E7A89">content</text>
+    <text x="952" y="100" font-size="17" class="mono" fill="#6E7A89">image_url</text>
+    <line x1="614" y1="112" x2="1122" y2="112" stroke="#262E38" stroke-width="1"/>
+
+    <text x="616" y="140" font-size="17" class="mono" fill="#C9D4E0">row-001</text>
+    <text x="742" y="140" font-size="17" fill="#C9D4E0">请把这段文案本地化</text>
+    <text x="952" y="140" font-size="17" class="mono" fill="#57606A">—</text>
+
+    <text x="616" y="166" font-size="17" class="mono" fill="#C9D4E0">row-002</text>
+    <text x="742" y="166" font-size="17" fill="#C9D4E0">总结这段访谈要点</text>
+    <text x="952" y="166" font-size="17" class="mono" fill="#57606A">—</text>
+  </g>
+
+  <!-- 向下箭头 -->
+  <g id="arrow">
+    <path d="M868 188 v18" stroke="#FFA657" stroke-width="2" stroke-linecap="round"/>
+    <path d="M862 200 l6 7 6 -7" fill="none" stroke="#FFA657" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+
+  <!-- 右下：JSONL 输出 -->
+  <g id="jsonl-output" class="sans">
+    <text x="600" y="238" font-size="17" fill="#6E7A89">输出 JSONL · 每行一条记录</text>
+    <rect x="600" y="250" width="536" height="102" rx="8" fill="#161B22" stroke="#262E38" stroke-width="1"/>
+
+    <text x="616" y="280" font-size="16" class="mono">
+      <tspan class="p">{</tspan><tspan class="k">"custom_id"</tspan><tspan class="p">: </tspan><tspan class="s">"row-001"</tspan><tspan class="p">, </tspan><tspan class="k">"body"</tspan><tspan class="p">: {</tspan>
+    </text>
+    <text x="640" y="306" font-size="16" class="mono">
+      <tspan class="k">"messages"</tspan><tspan class="p">: [{</tspan><tspan class="k">"role"</tspan><tspan class="p">: </tspan><tspan class="s">"user"</tspan><tspan class="p">, </tspan><tspan class="k">"content"</tspan><tspan class="p">: …}],</tspan>
+    </text>
+    <text x="640" y="332" font-size="16" class="mono">
+      <tspan class="k">"max_tokens"</tspan><tspan class="p">: </tspan><tspan class="n">4096</tspan><tspan class="p">, </tspan><tspan class="k">"temperature"</tspan><tspan class="p">: </tspan><tspan class="n">0.7</tspan><tspan class="p">}}</tspan>
+    </text>
+  </g>
+</svg>
