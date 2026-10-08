@@ -69,8 +69,7 @@ npm run preview
 │   │   └── components/       # 应用框架、上传、结果和侧栏组件
 │   ├── package.json
 │   └── vite.config.ts
-├── 上下文缓存.md
-├── 上下文缓存模型列表.md
+├── examples/                 # 上下文缓存示例载荷（内部数据，不被应用加载）
 └── README.md
 ```
 
@@ -113,3 +112,12 @@ npm run preview
 | `web_converter/vite.config.ts`、`vercel.json` | `/ark` 代理与部署入口 |
 
 这是通用浏览器端文件转换工具，不依赖飞书多维表格，也不是海报、报名或短链业务系统。
+
+## 官方资料
+
+模型、价格与 TTL 上限等易变信息以官方文档为准：
+
+- [火山方舟上下文缓存](https://www.volcengine.com/docs/82379/1398933)
+- [Responses API](https://www.volcengine.com/docs/82379/1569618)
+- [上下文缓存能力与支持模型](https://www.volcengine.com/docs/82379/1330310)
+- [Vite 文档](https://vite.dev/)

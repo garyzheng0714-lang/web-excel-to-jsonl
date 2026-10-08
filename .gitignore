@@ -1,1 +1,4 @@
 .worktrees/
+.DS_Store
+node_modules/
+web_converter/node_modules/
